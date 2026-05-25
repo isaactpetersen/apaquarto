@@ -30,7 +30,7 @@ end
 -- Is the .pdf in journal mode?
 local journalmode = false
 local manuscriptmode = true
-local noteprefix = "\\noindent \\emph{Note.} "
+local noteprefix = "\\noindent\\textit{Note.}"
 local beforenote = ""
 local getmode = function(meta)
   local documentmode = pandoc.utils.stringify(meta["documentmode"])
