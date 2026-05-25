@@ -18,6 +18,10 @@ engine: knitr
     * Line numbering
     * Full language option support
 
+# Version 5.0.17
+- 2026-03-25
+- [#152](https://github.com/wjschne/apaquarto/issues/71) Fix .pdf longtable problem Thanks [drfurtado](https://github.com/drfurtado) for identifing the problem and [Michael Zehetleitner](https://github.com/michaelzehetleitner) posting a solution.
+
 # Version 5.0.16
 - 2026-03-25
 - [#152](https://github.com/wjschne/apaquarto/issues/152) Fix .pdf journal mode line numbers Thanks [Ana Neves](https://github.com/AnafNeves)

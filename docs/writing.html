@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.25">
+<meta name="generator" content="quarto-1.9.36">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>APA Style via Markdown – APA Style Documents with apaquarto</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -87,14 +90,13 @@ div.csl-indent {
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-9b01675f1c40551801601b706a4e6a76.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-38ba35db5379291e606daab6e431ed59.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/kbd/kbd.js"></script>
 <link href="site_libs/quarto-contrib/kbd/kbd.css" rel="stylesheet">
 <script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
@@ -142,8 +144,6 @@ div.csl-indent {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="./index.html" class="navbar-brand navbar-brand-logo">
-    </a>
     <a class="navbar-brand" href="./index.html">
     <span class="navbar-title">APA Style Documents with apaquarto</span>
     </a>
@@ -349,7 +349,7 @@ margin-block-end: 0px;
 <section id="create-a-quarto-document" class="level1">
 <h1>Create a Quarto Document</h1>
 <p>To create a Quarto document in RStudio, in the menu (See <a href="#fig-newquarto" class="quarto-xref">Figure&nbsp;1</a>), click <em>File → New File → Quarto Document</em>.</p>
-<div id="fig-newquarto" class="quarto-float quarto-figure quarto-figure-center FigureWithoutNote" data-fignum="1" prefix="" data-custom-style="FigureWithoutNote">
+<div id="fig-newquarto" class="quarto-float quarto-figure quarto-figure-center FigureWithoutNote" prefix="" data-fignum="1" data-custom-style="FigureWithoutNote">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-newquarto-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -605,7 +605,7 @@ Tip
 
 <div class="no-row-height column-margin column-container"><div class="FigureWithoutNote" data-custom-style="FigureWithoutNote">
 <p>Those are not single quotes (<code>'</code>) that fence in the code chunk. Those are backticks (<code>`</code>), which are usually above the Tab key on most keyboards in the US.</p>
-<div id="fig-key" class="quarto-float quarto-figure quarto-figure-center" data-fignum="2" prefix="">
+<div id="fig-key" class="quarto-float quarto-figure quarto-figure-center" prefix="" data-fignum="2">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-key-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -633,7 +633,7 @@ Tip
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">fill =</span> <span class="st">"royalblue"</span>, <span class="at">alpha =</span> .<span class="dv">5</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="fig-myplot" class="quarto-float quarto-figure quarto-figure-center" data-fignum="3" prefix="">
+<div id="fig-myplot" class="quarto-float quarto-figure quarto-figure-center" prefix="" data-fignum="3">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-myplot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -674,7 +674,7 @@ Tip
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">fill =</span> <span class="st">"royalblue"</span>, <span class="at">alpha =</span> .<span class="dv">5</span>)</span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="fig-myplot2" class="quarto-float quarto-figure quarto-figure-center" data-fignum="4" prefix="">
+<div id="fig-myplot2" class="quarto-float quarto-figure quarto-figure-center" prefix="" data-fignum="4">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-myplot2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -712,7 +712,7 @@ Tip
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">fill =</span> <span class="st">"royalblue"</span>, <span class="at">alpha =</span> .<span class="dv">5</span>)</span>
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="fig-myplot4" class="quarto-float quarto-figure quarto-figure-center" data-fignum="5" prefix="">
+<div id="fig-myplot4" class="quarto-float quarto-figure quarto-figure-center" prefix="" data-fignum="5">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-myplot4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -810,7 +810,7 @@ Second paragraph.
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  fig-alt="A mediation model in which A causes B, and B causes C." </span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  apa-note="Variable A indirectly causes Variable C."</span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="fig-myimportedimage" class="quarto-float quarto-figure quarto-figure-center FigureWithNote" alt="A path diagram in which A causes B, and B causes C." data-apa-note="Variable A indirectly causes Variable C." data-fignum="6" prefix="" data-custom-style="FigureWithNote">
+<div id="fig-myimportedimage" class="quarto-float quarto-figure quarto-figure-center FigureWithNote" data-fignum="6" data-apa-note="Variable A indirectly causes Variable C." prefix="" alt="A path diagram in which A causes B, and B causes C." data-custom-style="FigureWithNote">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-myimportedimage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -856,7 +856,7 @@ Second paragraph.
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flextable</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_apa</span>() </span>
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="tbl-mytable" class="cell quarto-float quarto-figure quarto-figure-center" data-tblnum="2" prefix="" data-ft.align="left" data-apa-note="A note below table">
+<div id="tbl-mytable" class="cell quarto-float quarto-figure quarto-figure-center" data-tblnum="2" data-ft.align="left" data-apa-note="A note below table" prefix="">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mytable-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -950,7 +950,7 @@ Second paragraph.
 <span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">fill =</span> <span class="st">"royalblue"</span>, <span class="at">alpha =</span> .<span class="dv">5</span>)</span>
 <span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="fig-myplot3" class="quarto-float quarto-figure quarto-figure-center" data-fignum="7" prefix="">
+<div id="fig-myplot3" class="quarto-float quarto-figure quarto-figure-center" prefix="" data-fignum="7">
 <figure class="quarto-float quarto-float-fig figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-myplot3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
@@ -991,7 +991,7 @@ Second paragraph.
 <span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flextable</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_apa</span>() </span>
 <span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div id="tbl-disabledprocessing2" class="cell quarto-float quarto-figure quarto-figure-center" data-tblnum="3" prefix="" data-disable-apaquarto-processing="true" data-ft.align="left">
+<div id="tbl-disabledprocessing2" class="cell quarto-float quarto-figure quarto-figure-center" data-tblnum="3" data-disable-apaquarto-processing="true" prefix="" data-ft.align="left">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-disabledprocessing2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="FigureTitle" data-custom-style="FigureTitle">
