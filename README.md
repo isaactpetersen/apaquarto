@@ -19,6 +19,25 @@ here](https://wjschne.github.io/apaquarto/).
 
 [Version History](https://wjschne.github.io/apaquarto/changelog.html)
 
+## Steps for Re-Syncing Repo
+
+```bash
+git fetch upstream
+
+git checkout main
+git merge upstream/main
+```
+
+1. Git will stop on conflicts.
+1. Edit any conflicted files.
+1. Then:
+
+```bash
+git add .
+git commit
+git push origin main
+```
+
 ## Example Outputs
 
 The apaquarto-docx form looks like this:
