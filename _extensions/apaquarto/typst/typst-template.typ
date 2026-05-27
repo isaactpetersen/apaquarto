@@ -43,8 +43,8 @@
 ) = {
 
   if suppresstitlepage {counter(page).update(first-page)}
-
-  show raw.where(block: true): set par(
+  
+   show raw.where(block: true): set par(
     spacing: 6pt,
     leading: 6pt
   )
