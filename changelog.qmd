@@ -21,6 +21,9 @@ engine: knitr
 # Version 5.0.17
 - 2026-03-25
 - [#152](https://github.com/wjschne/apaquarto/issues/71) Fix .pdf longtable problem Thanks [drfurtado](https://github.com/drfurtado) for identifing the problem and [Michael Zehetleitner](https://github.com/michaelzehetleitner) posting a solution.
+- Allow 4th and 5th level headings to end with an exclamation point (credit to Claude)
+- Fixed minor coding bugs in Typst and Lua (credit to Claude)
+- Fixed minor documentation errors (credit to Claude)
 
 # Version 5.0.16
 - 2026-03-25

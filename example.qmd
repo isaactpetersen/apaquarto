@@ -97,8 +97,6 @@ word-count: false
 floatsintext: true
 # Numbered lines (.pdf and .docx only)
 numbered-lines: false
-# Set first page number of body
-first-page: 9
 # File with references
 bibliography: bibliography.bib
 # Suppress title page
@@ -135,6 +133,8 @@ language:
 # Keep `false` to remain consistent with APA style. If `true`, replaces ampersands with `and` or word specified in `citation-last-author-separator` in parenthetical citations. 
 no-ampersand-parenthetical: false
 fontsize: 12pt
+execute: 
+  cache: true
 format:
   apaquarto-html: 
     toc: true
@@ -144,12 +144,14 @@ format:
     keep-typ: true
     list-of-figures: false
     list-of-tables: false
-    toc: false
+    toc: true
     papersize: "us-letter"
+    numbersections: true
   apaquarto-pdf:
     # Can be jou (journal), man (manuscript), stu (student), or doc (document)
     documentmode: man
     keep-tex: true
+    pdf-standard: ua-2
 ---
 
 ```{r}
@@ -242,6 +244,7 @@ A reference label for a figure must have the prefix `fig-`, and in a code chunk,
 #| apa-note: This is the note below the figure.
 #| fig-height: 2
 #| fig-width: 3
+#| fig-alt: A positively skewed log-normal distribution.
 ggplot(data.frame(x = c(0, 35)), aes(x)) +
   stat_function(fun = dchisq, 
                 args = list(df = 10),
@@ -276,8 +279,6 @@ lm(price ~ carat + depth + table, data = ggplot2::diamonds) |>
 
 To refer to this table in text, use the `@` symbol followed by the reference label like so: As seen in @tbl-mytable, the price of a diamond is related to several features of the diamond.
 
-
-
 ## Tables and Figures Spanning Two Columns in Journal Mode
 
 When creating tables and figures in journal mode, care must be taken not to make figures and tables wider than the columns, otherwise $\LaTeX$ sometimes makes them disappear.
@@ -293,6 +294,7 @@ As demonstrated in @fig-twocolumn, you can make figures tables span the two colu
 #| fig-width: 6.2
 #| fig-align: center
 #| fig-pos: "tp"
+#| fig-alt: A normal distribution.
 ggplot(data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, 
                 geom = "area",
@@ -426,7 +428,7 @@ mtcars |>
 
 # Another Appendix {#apx-b}
 
-![Appendix Figure](sampleimage.png){#fig-appendfig apa-note="A *note* below the figure"}
+![Appendix Figure](sampleimage.png){#fig-appendfig apa-note="A *note* below the figure" fig-alt="A path diagram in which A causes B, and B causes C."}
 
 See @fig-appendfig, an example of an imported graphic using markdown syntax. 
 

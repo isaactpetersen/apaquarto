@@ -60,3 +60,5 @@ apa.csl
 contributors_table_template_tenzing.xlsx
 **/*.quarto_ipynb
 .positai
+.claude
+example_cache/
