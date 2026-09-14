@@ -33,6 +33,8 @@ local fields = {
   { field = "citation-masked-date",            default = "n.d." },
   { field = "email",                           default = "Email" },
   { field = "figure-table-note",               default = "Note" },
+  { field = "journal-volume",                  default = "Vol." },
+  { field = "journal-issue",                   default = "No." },
   { field = "section-title-abstract",          default = "Abstract" },
   { field = "section-title-appendixes",        default = "Appendices" },
   { field = "section-title-references",        default = "References" },
@@ -41,6 +43,7 @@ local fields = {
   { field = "title-block-keywords",            default = "Keywords" },
   { field = "title-block-role-introduction",   default = "Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org/) as follows:" },
   { field = "title-impact-statement",          default = "Impact Statement" },
+  { field = "title-supplemental-materials",    default = "Supplemental materials" },
   { field = "title-word-count",                default = "Word Count" },
   { field = "references-meta-analysis",        default = "References marked with an asterisk indicate studies included in the meta-analysis." },
 }

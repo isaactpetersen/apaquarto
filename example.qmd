@@ -89,12 +89,14 @@ keywords:
   - Quarto
   - Markdown
   - apaquarto
+# Optional pointer to supplemental materials, shown on the line below the keywords.
+supplemental-materials: "Documentation and web app at  <https://wjschne.github.io/apaquarto/>"
 # Optional statement about the importance of the paper. The heading can be customized in the language field.
-impact-statement: "The apaquarto template allow writers to apply APA style consistently with minimal fuss and bother."
+impact-statement: "The apaquarto template allows writers to apply APA style consistently with minimal fuss and bother."
 # If true, a word count will appear below the keywords (tables, figure captions, and references excluded in count.)
 word-count: false
 # If true, tables and figures are mingled with the text instead of listed at the end of the document.
-floatsintext: true
+# floatsintext: true
 # Numbered lines (.pdf and .docx only)
 numbered-lines: false
 # File with references
@@ -129,29 +131,45 @@ language:
   title-block-correspondence-note: "Correspondence concerning this article should be addressed to"
   title-block-role-introduction: "Author roles were classified using the Contributor Role Taxonomy (CRediT; [credit.niso.org](https://credit.niso.org)) as follows:"
   title-impact-statement: "Impact Statement"
+  title-supplemental-materials: "Supplemental materials"
   references-meta-analysis: "References marked with an asterisk indicate studies included in the meta-analysis."
 # Keep `false` to remain consistent with APA style. If `true`, replaces ampersands with `and` or word specified in `citation-last-author-separator` in parenthetical citations. 
 no-ampersand-parenthetical: false
-fontsize: 12pt
 execute: 
+  echo: false
   cache: true
+# mainfont: Times New Roman
+# monofont: Consolas
+papersize: us-letter
+journal:
+  title: "Nonexistent Journal of Generic Psychology"
+  logo: default
+  year: 2026
+  volume: 3
+  issue: 2
+  pages: 45--61
+  url: "https://wjschne.github.io/apaquarto"
+  issn: 0024-7662
+  copyrightnotice: 2025
+  copyrighttext: "The Author(s)"
 format:
   apaquarto-html: 
     toc: true
   apaquarto-docx: 
     toc: false
+    list-of-figures: true
   apaquarto-typst: 
-    keep-typ: true
+    # Options: manuscript (default), journal, student, document
+    documentmode: journal
+    keep-typ: false
     list-of-figures: false
     list-of-tables: false
-    toc: true
-    papersize: "us-letter"
-    numbersections: true
+    toc: false
+    numbersections: false
+    author-note-columns: auto # 1, 2, or auto (default)
   apaquarto-pdf:
-    # Can be jou (journal), man (manuscript), stu (student), or doc (document)
-    documentmode: man
-    keep-tex: true
-    pdf-standard: ua-2
+    # Options: manuscript (default), journal, student, document
+    documentmode: manuscript
 ---
 
 ```{r}
@@ -163,7 +181,6 @@ library(flextable)
 library(ftExtra)
 library(apa7)
 library(knitr)
-library(tinytable)
 conflicts_prefer(dplyr::filter, .quiet = TRUE)
 conflicts_prefer(flextable::separate_header, .quiet = TRUE)
 conflicts_prefer(ggplot2::theme_void, .quiet = TRUE)
@@ -173,9 +190,12 @@ set_flextable_defaults(theme_fun = theme_apa,
                        table_align = "left")
 ```
 
+
 This is my introductory paragraph. The title will be placed above it automatically. *Do not start with an introductory heading* (e.g., "Introduction"). The title acts as your Level 1 heading for the introduction.
 
 Details about writing headings with markdown in APA style are [here](https://wjschne.github.io/apaquarto/writing.html#headings-in-apa-style). In general, level 1 headings should be reserved for the Method, Results, Discussion, References, and Appendices sections. 
+
+
 
 ## YAML metadata
 
@@ -232,6 +252,16 @@ $$
 \sigma_e=\sigma_y\sqrt{1-r_{xy}^2}
 $$
 
+## Using Footnotes
+
+A footnote is usually displayed at the bottom of the page on which the footnote occurs.  A short note can be specified with the `^[My note here]` syntax.^[Here is my short footnote!] A longer note can be specified with the `[^id]` syntax with the text specified on a separate line like so `[^id]: Text here`.[^mylongfootnote]
+
+[^mylongfootnote]: This is a longer footnote. If it has multiple paragraphs, subsequent paragraphs need to be indented with two tabs.
+
+    This paragraph is still part of the footnote because it is indented with two tabs.
+
+A regular paragraph without any indentation is not part of the footnote and will be part of the main body of the document.
+
 ## Displaying Figures
 
 Do you want the tables and figures to be at the end of the document? You can set the `floatsintext` option to false. The reference labels will work no matter where they are in the text.
@@ -273,7 +303,7 @@ We can make a table the same way as a figure. Generating a table that conforms t
 
 lm(price ~ carat + depth + table, data = ggplot2::diamonds) |>  
   apa_parameters() |> 
-  apa_flextable()
+  apa_flextable(font_size = 10)
 
 ```
 
@@ -288,7 +318,7 @@ As demonstrated in @fig-twocolumn, you can make figures tables span the two colu
 ```{r}
 #| label: fig-twocolumn
 #| fig-cap: A Figure Spanning Two Columns When in Journal Mode
-#| apa-note: Figures in two-column mode are only different for jou mode in .pdf documents
+#| apa-note: Figures in two-column mode are only different for journal mode in .pdf and typst documents
 #| apa-twocolumn: true
 #| fig-height: 3
 #| fig-width: 6.2
@@ -304,15 +334,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x)) +
   theme_void()
 ```
 
-## Using Footnotes
 
-A footnote is usually displayed at the bottom of the page on which the footnote occurs.  A short note can be specified with the `^[My note here]` syntax.^[Here is my short footnote!] A longer note can be specified with the `[^id]` syntax with the text specified on a separate line like so `[^id]: Text here`.[^mylongfootnote]
-
-[^mylongfootnote]: This is a longer footnote. If it has multiple paragraphs, subsequent paragraphs need to be indented with two tabs.
-
-    This paragraph is still part of the footnote because it is indented with two tabs.
-
-A regular paragraph without any indentation is not part of the footnote and will be part of the main body of the document.
 
 ## Hypotheses, Aims, and Objectives
 
@@ -411,27 +433,24 @@ If there is only one appendix, the label inserted above the the appendix title w
 
 To cite an appendix as a whole, reference it with the `@apx-` prefix. For example, see @apx-a and @apx-b.
 
-@apx-a is an appendix with a contingency table (see @tbl-chisq).
-
-```{r}
-#| label: tbl-chisq
-#| tbl-cap: Contingency table
-#| apa-twocolumn: true
-mtcars |>
-  select(Transmission = am, Gears = gear) |>
-  mutate(Gears = factor(Gears),
-         Transmission = factor(Transmission, 
-                               labels = c("Automatic", "Manual"))) |>
-  apa_chisq()
-```
-
-
-# Another Appendix {#apx-b}
-
 ![Appendix Figure](sampleimage.png){#fig-appendfig apa-note="A *note* below the figure" fig-alt="A path diagram in which A causes B, and B causes C."}
 
 See @fig-appendfig, an example of an imported graphic using markdown syntax. 
 
 
 
+# Another Appendix {#apx-b}
+
+@apx-b is an appendix with a contingency table (see @tbl-chisq).
+
+```{r}
+#| label: tbl-chisq
+#| tbl-cap: Contingency table
+mtcars |>
+  select(Transmission = am, Gears = gear) |>
+  mutate(Gears = factor(Gears),
+         Transmission = factor(Transmission, 
+                               labels = c("Automatic", "Manual"))) |>
+  apa_chisq(table_width = .5, font_size = 10)
+```
 
