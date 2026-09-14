@@ -859,7 +859,7 @@ return {
 
       if #credit_paragraph.content > 1 then
         local authorroleintroduction = pandoc.Str(
-        "Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org/) as follows:")
+        "Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org) as follows:")
         if meta.language and meta.language["title-block-role-introduction"] then
           authorroleintroduction = meta.language["title-block-role-introduction"]
           if type(authorroleintroduction) == "string" then

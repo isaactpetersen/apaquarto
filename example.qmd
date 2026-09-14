@@ -12,7 +12,7 @@ author:
     email: sm@example.org
     url: https://example.org/
     # Roles are optional. 
-    # Select from the CRediT: Contributor Roles Taxonomy https://credit.niso.org/
+    # Select from the CRediT: Contributor Roles Taxonomy https://credit.niso.org
     # conceptualization, data curation, formal analysis, funding acquisition, investigation, 
     # methodology, project administration, resources, software, supervision, validation, 
     # visualization, writing, editing

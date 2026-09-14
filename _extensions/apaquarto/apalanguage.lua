@@ -41,7 +41,7 @@ local fields = {
   { field = "title-block-author-note",         default = "Author Note" },
   { field = "title-block-correspondence-note", default = "Correspondence concerning this article should be addressed to" },
   { field = "title-block-keywords",            default = "Keywords" },
-  { field = "title-block-role-introduction",   default = "Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org/) as follows:" },
+  { field = "title-block-role-introduction",   default = "Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org) as follows:" },
   { field = "title-impact-statement",          default = "Impact Statement" },
   { field = "title-supplemental-materials",    default = "Supplemental materials" },
   { field = "title-word-count",                default = "Word Count" },

@@ -355,7 +355,7 @@ affiliations:
 
 ## Author Roles
 
-APA Style encourages but does not require papers with multiple authors to describe author roles using the [Contributor Roles Taxonomy](https://credit.niso.org/) (CRediT). There are 14 contributor roles:
+APA Style encourages but does not require papers with multiple authors to describe author roles using the [Contributor Roles Taxonomy](https://credit.niso.org) (CRediT). There are 14 contributor roles:
 
 | Role | Description |
 |------|-------------|
@@ -727,7 +727,7 @@ However, there are a few options that are specific to apaquarto and thus were no
 | `figure-table-note` | The translation for "Note" in table and figure notes | *Note* |
 | `title-block-author-note` | The heading of the author note | *Author Note* |
 | `title-block-correspondence-note` | The phrase introducing the correspondence note. | *Correspondence concerning this article should be addressed to* |
-| `title-block-role-introduction` | The phrase introducing the author roles. | *Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org/) as follows:* |
+| `title-block-role-introduction` | The phrase introducing the author roles. | *Author roles were classified using the Contributor Role Taxonomy (CRediT; https://credit.niso.org) as follows:* |
 | `title-impact-statement` | The heading for the impact statement | *Impact Statement* |
 | `title-supplemental-materials` | The phrase before the value of `supplemental-materials` | *Supplemental materials* |
 | `title-word-count` | The phrase before the word count when `word-count: true` | *Word Count* |
@@ -744,7 +744,7 @@ language:
   citation-masked-date: "n.f."
   title-block-author-note: "Nota de Autores"
   title-block-correspondence-note: "La correspondencia relativa a este artículo debe dirigirse a"
-  title-block-role-introduction: "Los roles de autor se clasificaron utilizando la taxonomía de roles de colaborador (CRediT; https://credit.niso.org/) de la siguiente manera:"
+  title-block-role-introduction: "Los roles de autor se clasificaron utilizando la taxonomía de roles de colaborador (CRediT; https://credit.niso.org) de la siguiente manera:"
   references-meta-analysis: "Las referencias marcadas con un asterisco indican estudios incluidos en el metanálisis."
   title-impact-statement: "Declaración de Impacto"
   title-word-count: "Recuento de Palabras"
