@@ -1,0 +1,583 @@
+# What each fixture should produce.
+#
+# One entry per fixture and format. `to` is the format to render, and `expect`
+# is keyed by the extension of the file to read: html, docx, pdf, tex or typ.
+# Under each of those:
+#
+#   contains  text that must appear
+#   absent    text that must not appear
+#   count     text, and exactly how many times it must appear
+#
+# All three are plain text, matched literally, never as a regular expression.
+# Keep every string in single quotes so that a backslash means a backslash.
+#
+# What to assert: the thing the fixture is for. A check that merely restates
+# what the renderer happens to do today will break on every harmless change and
+# teach everyone to ignore it. A check tied to the bug the fixture was written
+# for goes off when that bug comes back, which is the whole point.
+
+# --------------------------------------------------------- notes and panels --
+
+- fixture: multipanel-notes.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the first panel.'
+        - 'A note belonging to the second panel.'
+        - 'A note belonging to the table.'
+      absent:
+        # Quarto's own panel label, which apaquarto replaces.
+        - '(a)'
+        # A replacement character in a class list: an attribute value read as
+        # though it were a class.
+        - "�"
+      count:
+        # One note per panel, centred, and one each for the figure as a whole
+        # and for the table, flush left. The class is matched with its
+        # attribute name, since the style is named twice in every note div:
+        # once as a class and once as data-custom-style.
+        'class="SubPanelNote': 2
+        'class="FigureNote NoIndent"': 2
+
+- fixture: multipanel-notes.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the first panel.'
+        - 'A note belonging to the second panel.'
+        - 'A note belonging to the table.'
+    docx-xml:
+      absent:
+        # The reference document's table style draws a rule under every row,
+        # which belongs to APA tables and to no figure.
+        - 'w:tblStyle w:val="Table"'
+
+- fixture: multipanel-notes.qmd
+  to: apaquarto-docx
+  expect:
+    docx-xml:
+      count:
+        # The layout table holding the two panels, and the data table further
+        # down.
+        '<w:tbl>': 2
+        # One row for the two panels, three for the data table. This is what
+        # says the panels are beside each other: quarto writes a table for
+        # each panel when the panels carry labels of their own, a row of two
+        # cells with the panel in the first and the second empty, and word
+        # sets each table under the one before it. Two tables alone would
+        # still count right with the panels stacked in two rows.
+        '<w:tr>': 4
+
+# The same figure with panels that carry no labels of their own, which takes a
+# different path here and through quarto.
+
+- fixture: multipanel-notes-plain.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the left panel.'
+        - 'A note belonging to the right panel.'
+      count:
+        'class="SubPanelNote': 2
+        'class="FigureNote NoIndent"': 1
+
+- fixture: multipanel-notes-plain.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the left panel.'
+        - 'A note belonging to the right panel.'
+    docx-xml:
+      count:
+        # One layout table, holding the two panels side by side.
+        '<w:tbl>': 1
+      absent:
+        - 'w:tblStyle w:val="Table"'
+
+- fixture: multipanel-notes.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the first panel.'
+        - 'A note belonging to the table.'
+      absent:
+        - '??'
+    typ:
+      contains:
+        # The grid apaquarto builds itself, rather than quarto's.
+        - '#grid(columns: 2'
+
+- fixture: multipanel-notes.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the first panel.'
+        - 'A note belonging to the table.'
+      absent:
+        - '??'
+    tex:
+      contains:
+        - 'begin{apapanel}'
+      count:
+        # Two panels side by side in one figure environment. A panel left as a
+        # float of its own would make a figure within a figure, which latex
+        # sets one under the other whatever the layout asked for.
+        'begin{apapanel}': 2
+        # Named with its placement, so that the figure environments inside the
+        # author note's own definition in the preamble are not counted as a
+        # second figure in the body.
+        '\begin{figure}[H]': 1
+
+# The same figure again with panels written as plain markdown images, which is
+# neither a float nor a cell and keeps its note on the image itself.
+
+- fixture: multipanel-notes-image.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the left panel.'
+        - 'A note belonging to the right panel.'
+      count:
+        'class="SubPanelNote': 2
+        'class="FigureNote NoIndent"': 1
+
+- fixture: multipanel-notes-image.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'Panel A'
+        - 'Panel B'
+        - 'A note belonging to the whole figure.'
+        - 'A note belonging to the left panel.'
+        - 'A note belonging to the right panel.'
+    docx-xml:
+      count:
+        '<w:tbl>': 1
+
+- fixture: multipanel-notes-image.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        # The caption follows the label rather than sitting under the picture.
+        - 'Panel A. First panel.'
+        - 'Panel B. Second panel.'
+        - 'A note belonging to the whole figure.'
+      count:
+        # Once each. The first panel's note used to be printed a second time
+        # after the whole figure.
+        'A note belonging to the left panel.': 1
+        'A note belonging to the right panel.': 1
+
+- fixture: multipanel-notes-image.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'Panel A. First panel.'
+        - 'Panel B. Second panel.'
+        - 'A note belonging to the left panel.'
+        - 'A note belonging to the right panel.'
+        - 'A note belonging to the whole figure.'
+    tex:
+      count:
+        'begin{apapanel}': 2
+        # Named with its placement, so that the figure environments inside the
+        # author note's own definition in the preamble are not counted as a
+        # second figure in the body.
+        '\begin{figure}[H]': 1
+
+# ------------------------------------------- abstract written in the document --
+
+- fixture: abstract-section.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'The body of the article starts here'
+      count:
+        # Once each: on the title page, and not still in the body as well.
+        'The first paragraph of an abstract that was written in the document.': 1
+        'The second paragraph, which is here to show that both of them arrive.': 1
+        'A statement of the impact, written in the document beside the abstract.': 1
+
+- fixture: abstract-section.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      count:
+        'The first paragraph of an abstract that was written in the document.': 1
+        'The second paragraph, which is here to show that both of them arrive.': 1
+        'A statement of the impact, written in the document beside the abstract.': 1
+
+- fixture: abstract-section.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      absent:
+        # As above: a heading of that name means the section is still in the
+        # body rather than on the title page.
+        - '= Abstract'
+        - '= Impact Statement'
+        - '= Introduction'
+    pdf:
+      contains:
+        - 'The body of the article starts here'
+      count:
+        'The first paragraph of an abstract that was written in the document.': 1
+        'The second paragraph, which is here to show that both of them arrive.': 1
+        'A statement of the impact, written in the document beside the abstract.': 1
+
+- fixture: abstract-section.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'The body of the article starts here'
+      count:
+        'The first paragraph of an abstract that was written in the document.': 1
+        'The second paragraph, which is here to show that both of them arrive.': 1
+        'A statement of the impact, written in the document beside the abstract.': 1
+    tex:
+      absent:
+        # Counting the sentences is not enough on its own: left in the body as
+        # an ordinary section, each of them still appears exactly once. What
+        # says the section was taken up into the title page is that latex is
+        # not setting a section of that name.
+        - 'section{Abstract}'
+        - 'section{Impact Statement}'
+        - 'section{Introduction}'
+
+# ------------------------------------------------------------- pdf via apa7 --
+
+# ------------------------------------------------------------------- typst --
+
+- fixture: typst-doc.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        - 'A table that should appear inline in document mode.'
+      absent:
+        - '??'
+
+- fixture: typst-jou-floats.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        - 'This figure spans both columns.'
+        - 'This table spans both columns.'
+      absent:
+        - '??'
+
+- fixture: typst-jou-pagebreak.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        - 'This section follows the manual page break.'
+
+- fixture: typst-student.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        - 'Body text for the student paper fixture.'
+
+# ------------------------------------------- floats spanning both columns --
+
+- fixture: latex-jou-floats.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      count:
+        # Both wide figures, whichever way they were written, and the wide
+        # table. A float written as a code chunk carries apa-twocolumn on the
+        # cell div rather than on the float, and used to be set inside one
+        # column: two of these three were one.
+        # Named with the placement a spanning float is given, so that the
+        # author note, which is a figure* of its own at the foot of the page,
+        # is not counted as one of them.
+        '\begin{figure*}[tbp]': 2
+        '\begin{table*}[tbp]': 1
+        # The narrow figure, which asked for nothing and is set in its column.
+        '\begin{figure}[H]': 1
+        # Each note written once. A note the filter writes into the float and
+        # leaves on the div as well comes out twice.
+        # The tilde is the space apaquarto ties the note's first word with.
+        'A~note on the wide chunk.': 1
+        'A~note on the wide table.': 1
+        'A~note on the narrow chunk.': 1
+    pdf:
+      contains:
+        - 'A note on the wide image.'
+        - 'A note on the wide chunk.'
+        - 'A note on the wide table.'
+      absent:
+        - '??'
+
+# ------------------------- table numbers, appendix references, longtables --
+
+- fixture: latex-jou-tables.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      count:
+        # A markdown table and a chunk table, numbered one and two. Both were
+        # Table 1: the markdown one was never counted, so it fell back to
+        # quarto's own order while the chunk table used apaquarto's.
+        '\apafloattitle{Table 1}': 1
+        '\apafloattitle{Table 2}': 1
+        # The number a reference prints, written by hand. In an appendix it
+        # carries the letter, which the counter alone cannot.
+        '\makeatletter\def\@currentlabel{A1}\makeatother': 2
+    pdf:
+      count:
+        # The head of a longtable set as a tabular, printed once. The marker
+        # that ends the repeating head did nothing, so it was printed twice.
+        'HEADMARKER': 1
+        'NOFOOTHEAD': 1
+      contains:
+        - 'Table A1'
+        - 'Figure A1'
+        # The foot under the last row of the body, where it belongs.
+        - 'ROWTWO r2 FOOTMARKER'
+        # A raw longtable with no foot marker of its own. One is added for
+        # it, without which the collection that moves the foot reads to the
+        # end of the document and nothing is rendered at all, so this line
+        # standing in the output is the check on that.
+        - 'NOFOOTROW'
+      absent:
+        # The foot directly under the head, which is where it was written and
+        # where it used to be set.
+        - 'HEADTWO FOOTMARKER'
+
+# ------------------------------------------------------- the journal masthead --
+
+- fixture: latex-jou-masthead.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # The masthead is what asks for two columns, since only the optional
+        # argument of twocolumn sets material across both of them.
+        - '\twocolumn[\apamastheadlift\usebox{\apamastheadbox}]'
+        - '\apamastheadlogo{'
+        # The title, the byline and the abstract span the page under the
+        # masthead, which means being inside the box handed to twocolumn
+        # above rather than standing in the first column.
+        - '\apajoutitle{'
+        - '\begin{apajoubyline}'
+        - '\begin{apajounarrow}'
+        # The author note, across the foot of the first page under a rule.
+        - '\begin{apajounote}'
+      count:
+        # Named once, where apalatex.tex defines it, and not a second time:
+        # a journal document with a masthead asks for its two columns through
+        # the masthead instead. The other two latex-jou fixtures, which have
+        # no journal metadata, take the older path.
+        '\apatwocolumn': 1
+    pdf:
+      contains:
+        - 'Nonexistent Journal of Generic Psychology'
+        - 'ISSN: 0024-7662'
+        - '2026, Vol. 3, No. 2, 45'
+        - '2025 The Author(s)'
+        - 'Text of the article, under the masthead.'
+        # The note itself, which a corresponding author gets whether or not
+        # an author-note field was written.
+        - 'Correspondence concerning this article'
+
+# ---------------------------------- floats at the end, and a table's foot --
+
+- fixture: latex-floatsintext.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      count:
+        # The placement latex chooses, since the figure no longer stands where
+        # it was written. H pins a float in place and is what it was given
+        # while floatsintext: false was being read as true.
+        '\begin{figure}[htbp]': 1
+      absent:
+        - '\begin{figure}[H]'
+        # A table is set in the text flow rather than in a float, so that one
+        # longer than a page can break over pages instead of being cut off at
+        # the foot of the first.
+        - '\begin{table}'
+    pdf:
+      contains:
+        # The floats follow the body rather than standing where they were
+        # written, which is what floatsintext: false asks for. Read as one
+        # string, so that it is the order being checked and not merely that
+        # all three are somewhere in the document.
+        - 'The last line of the body. Table 1 A table.'
+        - 'Figure 1 A figure.'
+
+- fixture: latex-man-tables.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      count:
+        # The head of a longtable set as a tabular, printed once.
+        'HEADMARKER': 1
+      contains:
+        # The foot under the last row of the body. A longtable inside a float
+        # never emits it, and every table in this format is in a float, so in
+        # manuscript mode this row simply disappeared.
+        - 'ROWTWO r2 FOOTMARKER'
+      absent:
+        # The foot directly under the head, which is where it is written.
+        - 'HEADTWO FOOTMARKER'
+
+# --------------------------------------------------------- numbered lines --
+
+- fixture: numbered-lines.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # lineno is what apa7 draws them with, and nolongtablepatch is what
+        # keeps it away from a table this format sets as a tabular anyway.
+        - '\usepackage[nolongtablepatch]{lineno}'
+        - '\linenumbers'
+        - '\resetlinenumber[1]'
+
+- fixture: numbered-lines.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # Half the body size, right aligned, ten points clear of the text,
+        # which is where apa7 leaves lineno's own numbers, in the sans stack
+        # the template names.
+        - '#set par.line(numbering: n => text(size: 0.5em, font: linenumberfont)[#n], number-align: right, number-clearance: 10pt)'
+
+- fixture: numbered-lines.qmd
+  to: apaquarto-docx
+  expect:
+    docx-xml:
+      contains:
+        - '<w:lnNumType'
+
+# ------------------------------------------------------ numbering offset --
+
+- fixture: latex-first-page.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # Where apa7 sets it: at the head of the body, so that the first page
+        # carries the number rather than the one after it.
+        - '\setcounter{page}{45}'
+
+# --- the apa7 regressions, checked against the plain latex format as well ---
+#
+# These five fixtures were written for apaquarto-pdf, each for a bug that once
+# got out. apaquarto-latex-pdf is meant to take that format's place, so it has
+# to hold the same ground. Both formats are checked while both are shipped.
+
+- fixture: subfigure-layout-grid.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      absent:
+        - 'Figure ??'
+    tex:
+      contains:
+        # This format builds the grid out of its own panel environment, which
+        # is a minipage underneath.
+        - 'begin{apapanel}'
+
+- fixture: issue-158-subfigure-notes.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      absent:
+        - 'Figure ??'
+
+- fixture: booktabs-paren-cell.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - '(Intercept)'
+
+- fixture: longtable-pagebreak.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        # A table longer than a page breaks over pages. Set in a float it
+        # cannot, and latex drops what will not fit without a word: this came
+        # out sixty lines short until tables were set in the text flow.
+        - 'Lorem ipsum dolor sit'
+        - 'Itaque earum rerum hic'
+
+- fixture: csl-length-compat.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'Schneider'
+      absent:
+        - '??'
+
+# ------------------------------------------------------------ orcid mark --
+
+- fixture: orcid-mark.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # Drawn in tex by the orcidlink package, and linked to the orcid.
+        - '\usepackage{orcidlink}'
+        - '\orcidlink{0000-0002-1825-0097}'
+      absent:
+        # No image, so nothing for quarto to put through rsvg-convert. The
+        # preamble's own svgnames option for xcolor is not this.
+        - 'ORCID-iD_icon'
+
+- fixture: orcid-mark.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        - 'ORCID-iD_icon'
+
+- fixture: orcid-mark.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'ORCID-iD_icon'

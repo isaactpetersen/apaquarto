@@ -1,6 +1,5 @@
-if FORMAT == "latex" then
-  return
-end
+-- Moves the floats to the end when floatsintext is false, in every format.
+
 Pandoc = function(doc)
   local tbl = {}
   local fig = {}

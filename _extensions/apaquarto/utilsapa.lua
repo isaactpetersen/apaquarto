@@ -96,17 +96,15 @@ function M.make_note(s, prefix)
 end
 
 -- make string, if it exists, else return default
+--- Test for nil, not for truthiness. A yaml false arrives as a lua false,
+--- which the old `if s then` read as an absent field and answered the empty
+--- string for, so every caller asking `stringify(x) ~= "false"` was told that
+--- `x: false` meant true. pandoc's own stringify answers "false" for it.
 function M.stringify(s, default)
-  if s then
-    s = pandoc.utils.stringify(s)
-  else
-    if default then
-      s = default
-    else
-      s = ""
-    end
+  if s == nil then
+    return default or ""
   end
-  return s
+  return pandoc.utils.stringify(s)
 end
 
 --- Coerce a metadata value to Inlines, or nil when it is absent or empty
@@ -210,6 +208,22 @@ local kFolder = (function()
   end
   return pandoc.path.directory(file)
 end)()
+
+--- Whether the document has anything to put in a journal masthead.
+---
+--- Asked by the two formats that set one: typst builds it in frontmatter.lua
+--- and latex builds it there too, but latex also has to know before the body
+--- is written, since a masthead is what decides whether the article opens with
+--- twocolumn or with a masthead handed to twocolumn.
+function M.has_journal_masthead(meta)
+  if meta == nil then return false end
+  local fields = { "url", "logo", "issn", "copyrightnotice", "copyrighttext" }
+  if M.journal_title(meta) or M.journal_issue_line(meta) then return true end
+  for _, name in ipairs(fields) do
+    if M.journal_field(meta, name) then return true end
+  end
+  return false
+end
 
 local function script_directory()
   return kFolder

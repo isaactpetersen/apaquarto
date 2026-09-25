@@ -9,8 +9,7 @@ author:
       - name: Test University
 bibliography: references.bib
 format:
-  apaquarto-pdf:
-    documentmode: man
+  apaquarto-pdf: default
 keep-tex: true
 ---
 

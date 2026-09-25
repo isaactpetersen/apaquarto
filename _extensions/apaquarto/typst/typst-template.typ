@@ -83,6 +83,64 @@
   v(-top / 2)
 }
 #let jouabstractwidth = 4.6875in
+
+// --- documentmode: doc ------------------------------------------------------
+// A plain document has no title page, so the title is marked out by its size
+// rather than by weight: apa7 sets it large and unemphasised there, and a bold
+// title in a continuous document reads as a heading over the paragraph under
+// it. 1.44x the body text, which is the size the journal title takes too.
+#let doctitlesize = 17.28pt
+
+// The abstract is inset from both margins. Set at the full measure it reads as
+// one more body paragraph; apa7 insets it by about an eighth of the text block
+// on each side, which is what this comes to.
+#let docabstractwidth = 77%
+
+
+// The line spacing of document mode, named so that the space after the
+// abstract can be two lines of it rather than a number that has to be kept in
+// step by hand.
+#let docleading = 14pt
+
+#let apadoctitle(body) = {
+  set align(center)
+  text(size: doctitlesize, weight: "regular")[#body]
+}
+
+#let apadocabstract(body) = {
+  set align(center)
+  block(width: docabstractwidth)[#align(left)[#body]]
+}
+
+// Two lines clear of the abstract before the body starts.
+#let apadocabstractgap() = v(2 * docleading, weak: true)
+
+// How much the author note is stepped down from the body. Applied on top of
+// the size typst already gives a footnote, which together come to about the
+// size apa7 sets the note at. It is not only a matter of looks: a note set
+// larger than this takes enough lines out of the foot of the first page that
+// typst moves the paragraph carrying its mark to the second page, and the note
+// goes with it.
+#let docauthornotesize = 0.83em
+
+// The rule that sets the author note apart from the body above it. A third of
+// the measure, which is what typst draws for a footnote by default and close to
+// what latex draws for one.
+#let docauthornoterule = line(length: 33%, stroke: 0.5pt)
+
+// A footnote rather than a floating placement at the foot of the page.
+//
+// A float goes to the foot of the page if it fits and to the next page if it
+// does not, and the first page of a document with a long abstract has no room
+// left: the note came out at the foot of page two. A footnote is tied to the
+// page its mark is on, so it stays on the first page whatever else is there.
+//
+// The mark itself is numbered to nothing, so neither the empty superscript in
+// the front matter nor a number in front of the note is shown; APA's author
+// note carries no footnote number.
+#let apadocauthornote(body) = footnote(
+  numbering: _ => "",
+)[#text(size: docauthornotesize)[#body]]
 // Kept in em so it tracks the smaller abstract text at the same ratio the jou
 // body uses. Measures as the 11pt baseline apa7 gives its \small abstract.
 #let jouabstractleading = 0.55em
@@ -195,6 +253,26 @@
 // How far the blank paragraph that formattypst.lua puts before a first
 // paragraph is pulled back up. It cancels the height of that blank
 // paragraph, so it follows the leading, and journal mode resets it.
+// The face the line numbers take when numbered-lines asks for them.
+//
+// apa7 numbers with lineno, which sets its numbers in a sans face. Typst
+// bundles exactly one sans -- DejaVu Sans Mono -- and naming any family it
+// cannot find draws a warning for that family on every render, whether or not
+// a later name in the list resolves. There is no way to quiet that warning in
+// typst 0.14: there is no allow(), no flag on typst compile, and quarto's own
+// --quiet would hide real errors along with it. So the default names only the
+// family typst is certain to have, which is silent on every machine and sets
+// the same numbers everywhere.
+//
+// Monospaced digits are no loss in a margin, where the numbers are set flush
+// right and a fixed width lines them up.
+//
+// linenumber-font names another, for a writer who knows the machine has it:
+//
+//   linenumber-font: Helvetica
+//   linenumber-font: [Helvetica, Arial]
+#let linenumberfont = ("DejaVu Sans Mono",)
+
 #let apafirstparshift = -18pt
 
 // Shared APA layout for every document mode. man/jou/doc/stu (defined below the
@@ -218,6 +296,8 @@
   // share of the top margin or as an absolute length. 0% sits it at the foot of
   // the margin, just above the text.
   headerascent: 50%,
+  // How far the footer is set below the text block. Only journal mode has one.
+  footerdescent: 11pt,
   margin: (x: 1in, y: 1in),
   paper: "us-letter",
   font: ("Times", "Times New Roman"),
@@ -329,6 +409,26 @@
     )
   }
 
+  // The opening page of a published article carries its number at the centre
+  // of the bottom margin, where the running head has not started yet. Every
+  // journal APA prints does this; the Journal of Educational Psychology, which
+  // the rest of this mode is measured against, sets it at the running head's
+  // own size rather than the larger size it gives the number in the head.
+  //
+  // The opening page only. From the second page on the number is in the head,
+  // in the outer corner, and a second one at the foot would be one too many.
+  let pagefooter = if headerstyle == "jou" {
+    context {
+      let pg = counter(page).get().at(0)
+      if pg <= first-page {
+        set text(size: if headersize == none { fontsize } else { headersize })
+        align(center)[#counter(page).display()]
+      }
+    }
+  } else {
+    none
+  }
+
   set page(
     margin: margin,
     paper: paper,
@@ -336,6 +436,11 @@
     numbering: pagenumbering,
     header-ascent: headerascent,
     header: pageheader,
+    footer: pagefooter,
+    // The number sits a line or so under the text block, which is where the
+    // Journal of Educational Psychology puts it: eleven points under, against
+    // the three typst leaves of its own accord.
+    footer-descent: footerdescent,
   )
   
 
@@ -562,7 +667,7 @@
 // title page or running head, page numbers at the foot. For notes and reports
 // that do not need full manuscript formatting.
 #let doc(..args) = apa-layout(
-  leading: 14pt,
+  leading: docleading,
   spacing: 8pt,
   firstlineindent: docfirstlineindent,
   justify: true,

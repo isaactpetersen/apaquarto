@@ -8,8 +8,7 @@ author:
 floatsintext: true
 keep-tex: true
 format:
-  apaquarto-pdf:
-    documentmode: man
+  apaquarto-pdf: default
 ---
 
 <!--

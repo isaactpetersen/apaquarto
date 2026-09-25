@@ -1,0 +1,119 @@
+# Windows, macOS and Linux.
+#
+# Runs on a pull request into main, on a release, and on request. Not on every
+# push: it is three times the work of test.yml and most of what breaks in
+# apaquarto is a lua filter, which behaves the same everywhere. What does
+# differ by platform is narrower and worth watching -- R's graphics devices
+# (the svg device on macos draws through cairo, which is part of XQuartz and
+# is missing on a plain machine), path handling, and which fonts and LaTeX
+# packages are to be had.
+
+name: cross-platform
+
+on:
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: cross-platform-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # One platform failing should not hide what the other two would have
+      # said, which is the whole reason for running all three.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        # "true" reads as "use posit package manager", but it only turns p3m on
+        # for x86_64 windows and linux; an arm64 mac goes to cran itself, which
+        # since september 2026 serves its macos binaries zstd-compressed under
+        # the .tgz name. pak works an archive's type out from its magic bytes
+        # and knows only gzip, bzip2 and xz, so it downloads the file whole and
+        # then stops at "unknown archive type" (r-lib/pak#915). "always" puts
+        # the mac on p3m too, which builds the same versions as gzip.
+        with:
+          use-public-rspm: always
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"all"'
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        # quarto installs tinytex by asking the github api for the latest
+        # rstudio/tinytex-releases, and an unauthenticated call from a shared
+        # runner address is rate limited: "Unable to determine latest release
+        # for rstudio/tinytex-releases, 403 - Forbidden", which fails the job
+        # before a single document is rendered. The token every workflow run
+        # already has raises that limit; it needs no permissions beyond the
+        # read this repository grants by default.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tinytex: true
+
+      - name: Show versions
+        shell: bash
+        run: |
+          quarto --version
+          Rscript -e 'cat(R.version.string, "\n")'
+
+      # Quarto turns an svg into a pdf with rsvg-convert, which it bundles on
+      # windows and on a mac and not on linux, where a render carrying one
+      # stops at "Could not convert a SVG to a PDF for output". No apaquarto
+      # format asks for this any more -- the orcid mark did, as the svg
+      # apaquarto ships, until the orcidlink package began drawing it in tex
+      # -- but a document of one's own may carry an svg figure, and this is
+      # what a reader on linux would have to install for it. Keeping it here
+      # means a document that includes one is still rendered rather than
+      # failing on the runner alone.
+      - name: Install rsvg-convert for svg images in pdf
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y librsvg2-bin
+
+      # gdtools, which flextable loads, is linked against cairo, and cairo on
+      # a mac is part of XQuartz. A plain runner has none, so the setup chunk
+      # of example.qmd stopped at "unable to load shared object
+      # gdtools.so: Library not loaded: /opt/X11/lib/libXrender.1.dylib"
+      # before a format was rendered. This is the same gap the header of this
+      # file describes for the svg device; a reader on a fresh mac meets it
+      # too, and installs the same thing.
+      - name: Install XQuartz for the cairo behind gdtools
+        if: runner.os == 'macOS'
+        run: brew install --cask xquartz
+
+      # Snapshots are compared on linux only, in test.yml. The same document
+      # gives a slightly different .tex and .typ on another platform -- the
+      # fonts it finds, the way paths are spelled -- and none of that is a
+      # fault worth failing a build over.
+      - name: Fixtures
+        shell: bash
+        run: Rscript tests/run-tests.R --no-snapshots
+
+      - name: example.qmd in every format
+        shell: bash
+        run: |
+          for format in apaquarto-html apaquarto-docx apaquarto-typst \
+                        apaquarto-pdf; do
+            echo "::group::$format"
+            quarto render example.qmd --to "$format"
+            echo "::endgroup::"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-${{ matrix.os }}
+          path: tests/_results/
+          retention-days: 7

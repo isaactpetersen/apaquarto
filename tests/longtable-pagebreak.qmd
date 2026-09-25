@@ -11,8 +11,7 @@ bibliography: ../references.bib
 floatsintext: true
 keep-tex: true
 format:
-  apaquarto-pdf:
-    documentmode: man
+  apaquarto-pdf: default
 ---
 
 This document reproduces the long-table clipping problem in manuscript-mode PDF output.
