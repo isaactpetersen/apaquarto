@@ -581,3 +581,881 @@
     html:
       contains:
         - 'ORCID-iD_icon'
+
+# ------------------------------------------------------- justified body --
+
+- fixture: justified-jou.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # ragged2e's justifying, which turns off the RaggedRight the preamble
+        # asks for. The indent is set with it: the two lengths are only kept
+        # in step by whichever of the pair was asked for last.
+        - '\justifying'
+        - 'setlength{\JustifyingParindent}{\apajouparindent}'
+
+- fixture: justified-jou.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # The body is justified in this mode ...
+        - 'justify: true'
+        # ... and a table is not, so a left aligned column stays left aligned.
+        - 'show table: set par(justify: false)'
+
+# ------------------------------------------------------ contents in word --
+
+- fixture: docx-contents.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # The whole of a cross reference is one link, not just its number:
+        # quarto writes the word, a hard space and a ref; hyperref colours
+        # only the number and leaves the word beside it plain.
+        - 'hyperref[fig-one]{Figure~'
+        # Every float writes its own line; the two commands read them back.
+        - 'addcontentsline{lof}{figure}'
+        - 'addcontentsline{lot}{table}'
+        - 'apalistoffigures'
+        - 'apalistoftables'
+    pdf:
+      contains:
+        - 'List of Figures'
+        - 'List of Tables'
+        # The same line the other two formats give.
+        - 'Figure 1. A first figure.'
+        - 'Table 1. A first table.'
+
+- fixture: docx-contents.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'Table of Contents'
+        - 'List of Figures'
+        - 'List of Tables'
+        - 'A first figure.'
+        - 'A first table.'
+        # Placed by apaquarto, so the heading it carries is there too and the
+        # field pandoc would have written at the top of the body is not.
+        - 'Method'
+    docx-xml:
+      contains:
+        # Each entry is a link to its float rather than a page number, which
+        # would need a field and so an update.
+        - 'w:anchor="fig-one"'
+        - 'w:anchor="tbl-one"'
+        # The page number of each entry, which has to be a field: nothing
+        # here knows where Word will break the pages.
+        - 'PAGEREF fig-one'
+        - 'PAGEREF tbl-one'
+        # Word takes no bookmark name of more than 40 characters, so pandoc
+        # hashes a longer identifier: the sha1 with an X for its first
+        # character. A link asking for the identifier itself would point at
+        # nothing, which is what the contents used to do for this heading.
+        - 'w:name="Xc24c7f1fa98fcadd084ea98e1299ca9922ae76c"'
+        - 'w:anchor="Xc24c7f1fa98fcadd084ea98e1299ca9922ae76c"'
+      absent:
+        # Not marked dirty. Word updates a dirty field while it loads the
+        # document, before the pages are laid out, so every PAGEREF answers
+        # 1, and the 1 stays once the update has cleared the flag. Left
+        # alone, the entry is there from the start and the numbers arrive
+        # correct the first time anything makes Word paginate and update.
+        - 'w:dirty'
+      count:
+        # The title, the author note and the three list headings, plus the
+        # writer's own {.unlisted} heading. An outline level of 9 does not
+        # take a Heading 1 out of Word's own contents field -- TOC \o
+        # collects the built-in heading styles whatever outline level is set
+        # -- so each of these takes a style of apaquarto's own, which Word
+        # does not know as a heading.
+        'ApaUnlistedHeading': 6
+        # One break from the front matter, which opens the first list, then
+        # one after each of the three, so every list has a page to itself and
+        # the body starts on the page after the last of them. This is how
+        # typst sets them, where each outline is followed by a #pagebreak().
+        # Checked in Word: title page, contents, figures, tables, body.
+        '<w:br w:type="page"/>': 4
+    log:
+      contains:
+        # Said once at the end of the render, because the page numbers cannot
+        # be filled in from here and whoever asked for the list is the person
+        # who needs to know.
+        - 'select all with ctrl+a'
+
+# ---------------------------------------------------- numbering of floats --
+
+- fixture: float-numbering.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'The second figure.'
+        - 'The third figure.'
+      count:
+        # Each number once in the body title, once in the list of figures,
+        # and once more where the text refers to it -- except the third,
+        # which nothing refers to. The point is that they differ at all: the
+        # multipanel figure used to repeat the number of the float before it,
+        # so this read Figure 1, Figure 1, Figure 3.
+        'Figure 1': 3
+        'Figure 2': 3
+        'Figure 3': 2
+    docx-xml:
+      count:
+        # One break before the appendix, not two. This fixture writes its
+        # appendix the older way --- "# Appendix A" over a title of its own
+        # --- which leaves two headings in a row that both open an appendix,
+        # and a break before each left the first alone on a page.
+        - text: '<w:br w:type="page"/>'
+          times: 4
+
+- fixture: float-numbering.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        # Right in the body and, since the list reads the appendix counter
+        # where the float is, right in the list as well.
+        - 'Figure A1'
+        - 'Table A1'
+
+- fixture: float-numbering.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'Figure A1'
+        - 'Table A1'
+    tex:
+      count:
+        # One break before the appendix, not two: this fixture writes its
+        # appendix the older way, which leaves two headings in a row that
+        # both open one. The .pdf had no break at all until 6.0.1.
+        - text: "\\clearpage\n\n\\section{Appendix}"
+          times: 1
+
+# ------------------------------------------- a contents in every format --
+
+- fixture: contents-everywhere.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'Table of Contents'
+        # The entry is a link to the heading, since .html has no pages.
+        - 'href="#method"'
+        - 'href="#procedure"'
+
+- fixture: contents-everywhere.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'Table of Contents'
+    docx-xml:
+      contains:
+        - 'PAGEREF method'
+
+- fixture: contents-everywhere.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # typst's own outline, which list-of-contents now asks for as well
+        # as toc: true.
+        - '#outline(title: [Table of Contents]'
+    pdf:
+      contains:
+        - 'Table of Contents'
+        - 'Procedure'
+
+- fixture: contents-everywhere.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        - 'apatableofcontents'
+        # The colour typst gives a link, asked for by name so that pandoc's
+        # own hypersetup can name it. Measured off the page: an external
+        # link comes out #0074D9 and a contents entry #000000.
+        - 'definecolor{apalink}{HTML}{0074D9}'
+        - 'linkcolor={apalink}'
+        # A link inside one of the lists takes the colour of the text around
+        # it, as typst's outlines do. The colour is a macro so that toccolor
+        # can change it -- pandoc's latex template writes no toccolor of its
+        # own, so the lists being apaquarto's means honouring it here.
+        - 'newcommand{\apatoccolor}{apatext}'
+        - 'hypersetup{linkcolor=\apatoccolor,citecolor=\apatoccolor,urlcolor=\apatoccolor}'
+    pdf:
+      contains:
+        - 'Table of Contents'
+        - 'Procedure'
+
+- fixture: html-contents-toc.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      absent:
+        # quarto's contents is in the margin already, so apaquarto adds none
+        # of its own. Its heading is the one with a capital C.
+        - 'Table of Contents'
+        # Neither list is built here, and neither leaves a div behind.
+        - 'list-of-figures'
+        - 'list-of-tables'
+      contains:
+        # quarto's own is still there
+        - 'Procedure'
+
+- fixture: doc-mode-lists.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'Table of Contents'
+        - 'List of Figures'
+        - 'List of Tables'
+    tex:
+      count:
+        # One in front of each of the three lists, so each has a page, and a
+        # fourth before the body: document mode has no title page to clear
+        # it, so without that one the paper began under the list of tables.
+        'clearpage': 4
+
+- fixture: jou-mode-lists.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        # All three, which journal mode used to drop altogether.
+        - 'Table of Contents'
+        - 'List of Figures'
+        - 'List of Tables'
+    tex:
+      contains:
+        - 'apatableofcontents'
+        - 'apalistoffigures'
+        - 'apalistoftables'
+      count:
+        # None at all. Journal mode runs the lists on in the columns, as
+        # typst's does, and nothing else in a jou paper clears a page: the
+        # masthead's own break belongs to 	wocolumn. Every other mode puts
+        # one in front of each list.
+        'clearpage': 0
+
+- fixture: link-colours.qmd
+  to: apaquarto-docx
+  expect:
+    docx-styles:
+      contains:
+        # A character style for each field, based on Hyperlink so that a
+        # writer's own changes to it still come through. Written as pandoc
+        # writes it: the styles are put into the reference document and
+        # pandoc reads that and writes the stylesheet out again itself.
+        - 'w:styleId="ApaUrlColor" w:type="character"><w:name w:val="ApaUrlColor" /><w:basedOn w:val="Hyperlink" /><w:rPr><w:color w:val="00FF00" /></w:rPr></w:style>'
+        - 'w:styleId="ApaFileColor" w:type="character"><w:name w:val="ApaFileColor" /><w:basedOn w:val="Hyperlink" /><w:rPr><w:color w:val="800080" /></w:rPr></w:style>'
+        - 'w:styleId="ApaLinkColor" w:type="character"><w:name w:val="ApaLinkColor" /><w:basedOn w:val="Hyperlink" /><w:rPr><w:color w:val="CC0000" /></w:rPr></w:style>'
+        - 'w:styleId="ApaCiteColor" w:type="character"><w:name w:val="ApaCiteColor" /><w:basedOn w:val="Hyperlink" /><w:rPr><w:color w:val="FF8000" /></w:rPr></w:style>'
+    docx-xml:
+      contains:
+        # A link reaches one of those styles only through a run inside it:
+        # pandoc ignores custom-style on a Link and honours it on a Span.
+        - '<w:rStyle w:val="ApaUrlColor" /></w:rPr><w:t xml:space="preserve">weblink</w:t>'
+        - '<w:rStyle w:val="ApaFileColor" /></w:rPr><w:t xml:space="preserve">filelink</w:t>'
+        - '<w:rStyle w:val="ApaLinkColor" /></w:rPr><w:t xml:space="preserve">Figure 1</w:t>'
+        - '<w:rStyle w:val="ApaCiteColor" /></w:rPr><w:t xml:space="preserve">Schneider &amp; McGrew, 2018</w:t>'
+        # toccolor is written into the runs of the lists, which carry no
+        # style of their own to hang it on.
+        - '<w:color w:val="008080"/></w:rPr><w:t xml:space="preserve">First</w:t>'
+      absent:
+        # The heading above a list is not a link and takes no toccolor.
+        - '<w:color w:val="008080"/></w:rPr><w:t xml:space="preserve">Contents</w:t>'
+
+- fixture: link-colours.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'main a[href^="#"] { color: #CC0000; }'
+        - 'main a[href*="//"], main a[href^="mailto:"] { color: #00FF00; }'
+        - 'main .citation a { color: #FF8000; }'
+        - 'main .apaquarto-contents a, nav#TOC a.nav-link { color: #008080; }'
+        # filecolor is what is neither an anchor nor a url.
+        - 'main a[href]:not([href^="#"]):not([href*="//"]):not([href^="mailto:"]) { color: #800080; }'
+        # The contents apaquarto builds into the page is in a div of its own,
+        # which is what toccolor names.
+        - 'apaquarto-contents'
+
+- fixture: jou-link-colours.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # The author note holds the correspondence line and nothing else.
+        # The show rules used to be written into the body before the front
+        # matter was split, and the split took a raw block at the end of it
+        # for the last block of the note: the rule that colours a link ended
+        # up inside the note, colouring the note's own links and no others.
+        - "#link(\"mailto:test@example.com\")[test\\@example.com]\n\n]\n"
+        - '#show outline.entry: it => {show link: set text(fill: rgb("#008080"))'
+        # And it stands ahead of the masthead, so that the corresponding
+        # author's email and the link in the abstract take it too.
+        - "  text(fill: c, it)\n}\n\n#place(top, scope: \"parent\", float: true"
+      absent:
+        # Journal mode runs continuously: no list begins a page of its own.
+        - '#pagebreak()'
+
+- fixture: link-colours.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # typst knows some of xcolor's names and means something else by
+        # them, and knows nothing of violet at all, so the name is resolved
+        # here and typst is handed the code.
+        - 'if d.starts-with("mailto:") or d.contains("://") { rgb("#00FF00") }'
+        - 'else { rgb("#800080") }'
+        - '} else if type(d) == label and str(d).starts-with("ref-") {'
+        - '    rgb("#FF8000")'
+        - '} else { rgb("#CC0000") }'
+        # An entry of a list links to a location and is left to the rule
+        # the list writes over its own entries.
+        - '  if type(d) == location { return it }'
+        # The entries of a list take toccolor, and the rule above is written
+        # after the outlines so that it does not override them.
+        - '#show outline.entry: it => {show link: set text(fill: rgb("#008080"))'
+
+- fixture: link-colours.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # hyperref takes a colour by name, so a code is defined as a colour
+        # of its own and the field rewritten to name it.
+        - '\definecolor{apacolorlink}{HTML}{CC0000}'
+        - 'linkcolor={apacolorlink},'
+        - 'citecolor={orange},'
+        - 'urlcolor={green},'
+        # toccolor, which pandoc's template does not write out at all.
+        - '\renewcommand{\apatoccolor}{teal}'
+        # hyperref calls [text](figure.png) a url and colours it urlcolor, so
+        # filecolor is set around such a link in a group of its own.
+        - '\begingroup\hypersetup{urlcolor=violet}\href{sampleimage.png}{filelink}\endgroup'
+
+- fixture: thesis-title.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # The title in capitals, broken into an inverted pyramid: the first
+        # line longest, each line after it shorter. The lines are worked out
+        # in lua, so these are the same three in all four formats.
+        - '\bfseries A STUDY OF WHATEVER IT IS THAT GRADUATE STUDENTS STUDY WHEN\\'
+        - 'THEY ARE STUDYING SOMETHING AT CONSIDERABLE\\'
+        - 'AND NOTABLE LENGTH\par}'
+        # A rule under each of the three blocks below the title.
+        - '\rule{5.50in}{0.5pt}'
+        # Page i carries no number, and there is no running head at all.
+        - '\thispagestyle{empty}'
+        - '\apathesishead\pagenumbering{roman}'
+        # The front matter is in lower-case roman and the body begins again
+        # at 1 in arabic.
+        - '\restoregeometry\doublespacing\pagenumbering{arabic}'
+        # The title page is set on 1" all round, so that its block stands at
+        # the centre of the paper; every page after it takes the handbook's
+        # 1.5" binding margin. A change of geometry puts the line spacing
+        # back to the document's, so the single spacing is asked for again
+        # after each one.
+        - '\newgeometry{left=1.00in,right=1.00in,top=1.00in,bottom=1.00in}'
+        - '\newgeometry{left=1.50in,right=1.00in,top=1.00in,bottom=1.00in}'
+        # The copyright page, whose year is the year of the diploma date.
+        - '© Copyright 2027 by Iwishiwere A. Graduate'
+        # The examining committee begins where the rules above it begin
+        # rather than out at the margin.
+        - '\raggedright\noindent\leftskip=0.50in\relax'
+        # The abstract, under a heading of its own and flush at the margin,
+        # and the dedication, centred with no heading at all.
+        - '\bfseries ABSTRACT\par}'
+        - '{\setlength{\parindent}{0pt}'
+        - 'For the committee, who read it all.\par}'
+        # The acknowledgments, set like the abstract: a heading in capitals
+        # and prose flush at the margin under it.
+        - '\bfseries ACKNOWLEDGMENTS\par}'
+        - 'Thanks to everyone who read a draft.'
+        # The contents: the front matter in capitals, the chapters under a
+        # label reading CHAPTER with their arabic numbers, and the back
+        # matter --- the references, and the appendices lettered in the
+        # order they are mentioned. The copyright page is not listed and
+        # neither is the contents itself.
+        - '\bfseries TABLE OF CONTENTS\par}'
+        - '\hyperref[apathesis-abstract]{\textcolor{apathesistoc}{ABSTRACT}}\apadotfill'
+        - '\makebox[0.25in][l]{1.}\hyperref[introduction]{\textcolor{apathesistoc}{INTRODUCTION}}'
+        - '\makebox[0.25in][l]{2.}\hyperref[method]{\textcolor{apathesistoc}{METHOD}}'
+        - '\hyperref[references]{\textcolor{apathesistoc}{REFERENCES}}'
+        - '\makebox[0.25in][l]{A.}\hyperref[apx-measures]{\textcolor{apathesistoc}{MEASURES USED}}'
+        - '\makebox[0.25in][l]{B.}\hyperref[apx-consent]{\textcolor{apathesistoc}{CONSENT FORMS}}'
+        # The lists of tables, figures and illustrations, each under a
+        # heading of its own with the two column labels over the entries.
+        # The contents lists them too, with the pages they begin on.
+        - '\bfseries LIST OF TABLES\par}'
+        - '\bfseries LIST OF FIGURES\par}'
+        - '\bfseries LIST OF ILLUSTRATIONS\par}'
+        # The entries of a contents are black unless toccolor says
+        # otherwise: they are links and would take the link colour.
+        - '\definecolor{apathesistoc}{HTML}{000000}'
+        - '\hyperref[apathesis-list-of-table]{\textcolor{apathesistoc}{LIST OF TABLES}}'
+        - '{\parindent=0pt\noindent Table\hfill Page\par}'
+        - '{\parindent=0pt\noindent Illustration\hfill Page\par}'
+        # An illustration is a figure with a word and a count of its own, so
+        # it is numbered from one rather than after the figures.
+        - '\makebox[0.25in][l]{1.}\hyperref[ill-sketch]'
+        # In the body every level-one heading is in capitals, and over each
+        # chapter stands the word CHAPTER and its number. The references
+        # have a part of their own to play and get no such line.
+        - '\section*{CHAPTER 1}'
+        - '\section*{CHAPTER 2}'
+        - '\section{INTRODUCTION}'
+        - '\section{METHOD}'
+        - '\section{REFERENCES}'
+        # Every major division begins a page of its own: each chapter, the
+        # sources section, and each appendix. The break before an appendix is
+        # written for .docx and typst elsewhere, so only latex wants one here.
+        - "\\clearpage\n\n\\section{REFERENCES}"
+        - "\\clearpage\n\n\\section{APPENDIX A}"
+        # The spacing is set between the blocks rather than inside them:
+        # setspace works the stretch into the size command, and a stretch
+        # asked for inside the group that holds a paragraph does not reach
+        # the lines of it.
+        - '\singlespacing'
+        - '\doublespacing'
+        # What the work is, what degree it answers to, who wrote it.
+        - 'A Dissertation\\'
+        - 'of the Requirements for the Degree\\'
+        - 'Iwishiwere A. Graduate\\'
+        # The committee, flush left at the foot.
+        - 'Examining Committee Members:\par}'
+        - 'Mentor Name, Advisory Chair, TU Department\\'
+        - 'Outside Name, External Member, Another University\par}'
+      absent:
+        # thesis mode has a front matter of its own, so the APA title page is
+        # not built as well. apatitlepageheading is what sets the headings of
+        # that page --- Author Note, Abstract, Impact Statement --- so none of
+        # it is here. Its definition in apalatex.tex is always written out;
+        # a call to it is what would mean the page was built.
+        - '\apatitlepageheading{'
+        # A subheading is listed only where contents-depth asks for one, and
+        # the copyright page is never listed in the contents.
+        - 'Background}\apadotfill'
+        - 'Copyright}\apadotfill'
+        # Only the chapters carry a CHAPTER line, and the contents lists a
+        # chapter by its own name rather than by the line above it.
+        - '\section*{CHAPTER 3}'
+        - 'CHAPTER 1}\apadotfill'
+      count:
+        # Six pages of front matter: the title page, the copyright page, the
+        # abstract, the dedication, the acknowledgments and the contents.
+        - text: '\clearpage'
+          times: 6
+
+- fixture: thesis-title.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        - '#strong[A STUDY OF WHATEVER IT IS THAT GRADUATE STUDENTS STUDY WHEN \'
+        - '#line(length: 5.50in, stroke: 0.5pt)'
+        - 'Examining Committee Members:'
+        # The title page on 1" all round and carrying nothing at the foot,
+        # the copyright page on the handbook's margins and numbered, and the
+        # body beginning again at 1.
+        - '#page(margin: (left: 1.00in, right: 1.00in, top: 1.00in, bottom: 1.00in), header: none, footer: none, numbering: none)'
+        - '#page(margin: (left: 1.50in, right: 1.00in, top: 1.00in, bottom: 1.00in))'
+        - '#counter(page).update(1)'
+        # The committee sits under the rules, and the abstract and the
+        # dedication are pages of their own.
+        - '#pad(left: 0.50in)'
+        - '#strong[ABSTRACT]'
+        - 'For the committee, who read it all.'
+        - '#strong[ACKNOWLEDGMENTS]'
+        # The contents, whose page numbers typst works out for itself at the
+        # place each label stands: roman for the front matter, arabic for the
+        # body, since the counter restarts between them.
+        - '#strong[TABLE OF CONTENTS]'
+        - '#apatocline(0.00in, none, [CHAPTER], none, false, false)'
+        - '#apatocline(0.00in, [1.], [INTRODUCTION], <introduction>, false, true)'
+        - '#apatocline(0.00in, [A.], [MEASURES USED], <apx-measures>, false, true)'
+        - '#apatocline(0.00in, none, [ABSTRACT], <apathesis-abstract>, true, true)'
+        - '#strong[LIST OF TABLES]'
+        - '#strong[LIST OF ILLUSTRATIONS]'
+        - '#heading(level: 1, outlined: false, numbering: none)[CHAPTER 1]'
+        - '= INTRODUCTION'
+        - '#apatocline(0.00in, [1.], [A sketch of the apparatus.], <ill-sketch>, false, true)'
+    pdf:
+      contains:
+        - 'A STUDY OF WHATEVER IT IS THAT GRADUATE STUDENTS STUDY WHEN'
+        - 'the Temple University Graduate Board'
+        - 'Outside Name, External Member, Another University'
+        - 'All Rights Reserved'
+        - 'An abstract that says what the work found'
+        - 'Thanks to everyone who read a draft.'
+        - 'For the committee, who read it all.'
+
+- fixture: thesis-title.qmd
+  to: apaquarto-docx
+  expect:
+    docx-xml:
+      contains:
+        # The title is bold and centred, and its lines are broken where lua
+        # broke them rather than wherever word would have wrapped them.
+        - '<w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">A</w:t>'
+        - '<w:r><w:br/></w:r>'
+        # The rule is a paragraph with a border under it, which is how word
+        # draws one.
+        - '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="0" w:color="auto"/></w:pBdr>'
+        # The title page is a section of its own, which is how it gets
+        # margins that are not the rest of the document's: 1" all round,
+        # against the 1.5" binding margin every page after it takes. It names
+        # no header, so no running head, and w:titlePg sends its one page to
+        # the empty "first" footer, so no number either.
+        - '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/><w:pgNumType w:fmt="lowerRoman" w:start="1"/><w:cols w:space="720"/><w:titlePg/>'
+        # The copyright page continues the roman numbering and does carry it.
+        - '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="2160" w:header="720" w:footer="720" w:gutter="0"/><w:pgNumType w:fmt="lowerRoman"/>'
+        # The committee begins where the rules begin, and the abstract takes
+        # the style apaquarto gives the first paragraph of an APA abstract,
+        # which is the one with no first line indented.
+        - '<w:ind w:left="720"/>'
+        - '<w:pStyle w:val="AbstractFirstParagraph" />'
+        # A contents entry is a link to a bookmark and a PAGEREF field for
+        # the page it is on, with a right tab and dot leaders between them.
+        # Nothing else in a .docx knows where word will break the pages.
+        - '<w:tab w:val="right" w:leader="dot" w:pos="8640"/>'
+        - '<w:hyperlink w:anchor="apathesis-abstract">'
+        - ' PAGEREF apathesis-abstract \h '
+        - ' PAGEREF apx-consent \h '
+        # And the front matter pages carry the bookmarks those point at.
+        - '<w:bookmarkStart w:id="8001" w:name="apathesis-abstract"/>'
+    docx:
+      contains:
+        - 'Examining Committee Members:'
+        - 'Mentor Name, Advisory Chair, TU Department'
+        - 'All Rights Reserved'
+        - 'For the committee, who read it all.'
+        - 'Thanks to everyone who read a draft.'
+        - 'TABLE OF CONTENTS'
+        - 'CHAPTER'
+        - 'LIST OF TABLES'
+        - 'LIST OF ILLUSTRATIONS'
+        - 'A sketch of the apparatus.'
+        - 'CHAPTER 1'
+        - 'INTRODUCTION'
+
+- fixture: thesis-title.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'thesis-front-matter-page'
+        - 'A STUDY OF WHATEVER IT IS THAT GRADUATE STUDENTS STUDY WHEN'
+        - 'Examining Committee Members:'
+        # There are no pages here, so a contents entry is the words and a
+        # link to them and nothing more.
+        - 'TABLE OF CONTENTS'
+        - '<a href="#apx-measures">A. MEASURES USED</a>'
+        - 'LIST OF ILLUSTRATIONS'
+
+- fixture: thesis-title-breaks.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # The writer broke the title themselves, so those are the lines. They
+        # would otherwise have fitted on one.
+        - '\bfseries THIS IS THE FIRST LINE OF MY TITLE\\'
+        - 'AND THIS IS THE SECOND LINE\par}'
+        # A thesis rather than a dissertation.
+        - 'A Thesis\\'
+        - 'Master of Education\par}'
+      absent:
+        # No committee was written, so there is no committee block.
+        - 'Examining Committee Members:'
+
+- fixture: student-fields.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # The page number and nothing else: a student paper has no running
+        # head. The .pdf had a manuscript's ever since it stopped being built
+        # with the apa7 class.
+        - '\apastudenthead'
+        # And the fields a student paper puts on its title page, which were
+        # written for typst alone.
+        - 'Statistics 101'
+        - 'Dr Example'
+        - '2026-09-30'
+    pdf:
+      contains:
+        - 'Statistics 101'
+        - 'Dr Example'
+      absent:
+        # The running head would be the short title in capitals.
+        - 'FINAL PAPER'
+
+- fixture: student-fields.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains:
+        - 'Statistics 101'
+        - 'Dr Example'
+        - '2026-09-30'
+
+- fixture: student-fields.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        - 'Statistics 101'
+        - 'Dr Example'
+    pdf:
+      absent:
+        - 'FINAL PAPER'
+
+- fixture: student-fields.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'Statistics 101'
+        - 'Dr Example'
+
+- fixture: toc-depth.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # The article class counts three levels of its own accord, so only a
+        # depth that is not three is written out.
+        - '\renewcommand{\apatocdepth}{2}'
+    pdf:
+      contains:
+        # Two levels listed, and the third heading is in the body where it
+        # belongs.
+        - 'Participants . . .'
+        - 'Recruitment'
+      absent:
+        # But not in the contents, where a leader follows it.
+        - 'Recruitment . . .'
+
+- fixture: toc-depth.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # typst listed every level there was until it was told a depth.
+        - '#outline(title: [Table of Contents], indent: 1.5em, depth: 2)'
+    pdf:
+      absent:
+        - 'Recruitment . . .'
+
+- fixture: toc-depth.qmd
+  to: apaquarto-docx
+  expect:
+    docx-xml:
+      contains:
+        # An entry of the contents is a link to the heading and a field for
+        # the page it is on.
+        - ' PAGEREF participants \h '
+      absent:
+        # The level-three heading is in the body and not in the contents.
+        - ' PAGEREF recruitment \h '
+
+- fixture: toc-depth.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'apaquarto-contents'
+        - '<a href="#participants">'
+      absent:
+        - '<a href="#recruitment">'
+
+- fixture: appendix-pages.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        # A break before each appendix. The .pdf had none of its own since
+        # 6.0.0 stopped building it with the apa7 class, which had been
+        # opening the page.
+        - "\\clearpage\n\n\\section{Appendix A}"
+        - "\\clearpage\n\n\\section{Appendix B}"
+    pdf:
+      contains:
+        # Four pages: the title page, the body, and an appendix on each of
+        # the last two, which is what typst and .docx have always given.
+        - 'First Appendix'
+        - 'Second Appendix'
+
+- fixture: appendix-pages.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        - '#pagebreak(weak: true)'
+
+- fixture: appendix-pages.qmd
+  to: apaquarto-docx
+  expect:
+    docx-xml:
+      contains:
+        - '<w:br w:type="page"/>'
+
+- fixture: thesis-lists.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains:
+        # A contents and a list of figures, neither asked for: a dissertation
+        # carries all four unless it says otherwise.
+        - 'TABLE OF CONTENTS'
+        - 'LIST OF FIGURES'
+      absent:
+        # No table in the document, so no list of tables. A heading over an
+        # empty page helps nobody.
+        - 'LIST OF TABLES'
+        # And list-of-illustrations is false, so that one is left out though
+        # the document has an illustration --- and the contents does not name
+        # it either.
+        - 'LIST OF ILLUSTRATIONS'
+
+- fixture: thesis-lists.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains:
+        - 'TABLE OF CONTENTS'
+        - 'LIST OF FIGURES'
+      absent:
+        - 'LIST OF TABLES'
+        - 'LIST OF ILLUSTRATIONS'
+
+# The line spacing the Graduate School asks for: a block quotation single
+# spaced and half an inch in from both margins, the entries of the reference
+# list and of the table of contents single spaced within an entry and a double
+# space apart, and widows and orphans avoided. The measurements are in the
+# snapshots; what is checked here is that each format is asked for them.
+- fixture: thesis-typography.qmd
+  to: apaquarto-pdf
+  expect:
+    tex:
+      contains:
+        - '\apathesisquote'
+        - '\apathesisreferences'
+        - '\apathesispenalties'
+        - '\apathesisnotes'
+        # The contents entries are set single and stand a double space apart.
+        - '\apathesissingle\setlength{\parskip}{\apathesisentrysep}'
+    pdf:
+      contains:
+        - 'TABLE OF CONTENTS'
+        - 'REFERENCES'
+
+- fixture: thesis-typography.qmd
+  to: apaquarto-typst
+  expect:
+    typ:
+      contains:
+        # The reference list is wrapped rather than set around, so the spacing
+        # stops with the list and an appendix after it is unaffected.
+        - '#thesisreferences['
+        # A note's first line begins half an inch in, and a double space
+        # stands between one note and the next.
+        - 'noteindent: 0.5in'
+        - 'notegap: 17.25pt'
+    pdf:
+      contains:
+        - 'TABLE OF CONTENTS'
+        - 'REFERENCES'
+
+- fixture: thesis-typography.qmd
+  to: apaquarto-docx
+  expect:
+    docx-styles:
+      contains:
+        # Block Text, NextBlockText, Bibliography and Footnote Text all take
+        # it. Written without the closing bracket, since pandoc rewrites the
+        # stylesheet and closes an empty element with a space before the
+        # slash, and reorders the attributes of the element below.
+        - '<w:spacing w:after="276" w:line="240" w:lineRule="auto"'
+        # A note's first line is indented half an inch.
+        - '<w:ind w:firstLine="720" />'
+    docx-xml:
+      contains:
+        # And the contents entries, which are written out rather than styled.
+        - '<w:spacing w:before="276" w:after="0" w:line="240" w:lineRule="auto"/>'
+
+- fixture: thesis-typography.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains:
+        - 'blockquote p, .blockquote p { line-height: 1em; }'
+        - '.csl-bib-body .csl-entry { line-height: 1em; margin-bottom: 1em; }'
+        - '.footnotes li p { line-height: 1em; }'
+
+# An apa-note belongs to a float of any kind, written either way round: on the
+# image, or on the div that holds it. An Illustration is the kind apaquarto
+# declares under crossref.custom, and it takes the note, the styles and the
+# spacing a figure takes.
+- fixture: illustration-note.qmd
+  to: apaquarto-html
+  expect:
+    html:
+      contains: ['zqfigimg', 'zqfigdiv', 'zqillimg', 'zqilldiv', 'zqtbl']
+
+- fixture: illustration-note.qmd
+  to: apaquarto-typst
+  expect:
+    pdf:
+      contains: ['zqfigimg', 'zqfigdiv', 'zqillimg', 'zqilldiv', 'zqtbl']
+      count:
+        # Once each. Two filters can each take the note for theirs to write,
+        # which is what prints it twice.
+        'zqfigimg': 1
+        'zqfigdiv': 1
+        'zqillimg': 1
+        'zqilldiv': 1
+        'zqtbl': 1
+
+- fixture: illustration-note.qmd
+  to: apaquarto-pdf
+  expect:
+    pdf:
+      contains: ['zqfigimg', 'zqfigdiv', 'zqillimg', 'zqilldiv', 'zqtbl']
+      count:
+        # Once each. Two filters can each take the note for theirs to write,
+        # which is what prints it twice.
+        'zqfigimg': 1
+        'zqfigdiv': 1
+        'zqillimg': 1
+        'zqilldiv': 1
+        'zqtbl': 1
+
+- fixture: illustration-note.qmd
+  to: apaquarto-docx
+  expect:
+    docx:
+      contains: ['zqfigimg', 'zqfigdiv', 'zqillimg', 'zqilldiv', 'zqtbl']
+    docx-xml:
+      contains:
+        # An illustration is styled as a figure is: the note held on the page
+        # with it, and the paragraph after a float with no note given the
+        # spacing that goes with that.
+        - '<w:pStyle w:val="FigureNote" />'
+        - '<w:pStyle w:val="FigureWithNote" />'
+        - '<w:pStyle w:val="FigureWithoutNote" />'
+        - '<w:pStyle w:val="AfterWithoutNote" />'

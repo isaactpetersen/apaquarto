@@ -1,0 +1,127 @@
+---
+title: "An Inquiry into Vexing Problems at the Intersection of Digital Typography, Tasseomancy, and Badminton"
+shorttitle: "Typography, Tasseomancy, and Badminton"
+author:
+  - name: W. Joel Schneider
+    corresponding: true
+    orcid: 0000-0002-8393-5316
+    email: schneider@temple.edu
+    affiliations:
+      - name: Temple University
+        department: College of Education and Human Development
+        address: 358 Ritter Hall
+        city: Philadelphia
+        region: PA
+        postal-code: 19122-6091
+abstract: "This is my abstract."
+keywords: [keyword1, keyword2]
+author-note:
+  disclosures:
+    conflict of interest: The author has no conflict of interest to declare.
+bibliography: tests/references.bib
+dedication: |
+  For everyone who wondered whether this would ever be finished.
+acknowledgments: |
+  Thanks to my committee, my family, and the miracle of coffee.
+documentmode: thesis
+thesis:
+  type: Dissertation
+  submitted-to: the Temple University Graduate Board
+  degree: Doctor of Philosophy
+  date: May 2027
+  committee:
+    - name: Nedra Goings, Ph.D.
+      role: Advisory Chair
+      affiliation: Department of Loving Candor and Cosmic Discernment
+    - name: Leslie Eccles, Ph.D.
+      affiliation: Department of Post-Prandial Musings and Aesthetic Abundance
+      role: Examining Chair
+    - name: Kristin Moh, Ph.D.
+      affiliation: Department of Musical Self-Actualization and the Universal Groove
+      role: External Member
+format:
+  apaquarto-typst: default
+  apaquarto-pdf: default
+  apaquarto-docx: default
+  apaquarto-html: default
+---
+# Introduction
+
+The body of the dissertation begins here, on a page of its own.
+
+## Background
+
+Some background.
+
+## Deeper Knowledge
+
+Cool stuff to know.
+
+Block quotes are on their own line starting with the \> character. For example, @austenMansfieldPark1990 ['s] *Mansfield Park* has some memorable insights about the mind:
+
+> If any one faculty of our nature may be called more wonderful than the rest, I do think it is memory. There seems something more speakingly incomprehensible in the powers, the failures, the inequalities of memory, than in any other of our intelligences. The memory is sometimes so retentive, so serviceable, so obedient; at others, so bewildered and so weak; and at others again, so tyrannic, so beyond control! We are, to be sure, a miracle every way; but our powers of recollecting and of forgetting do seem peculiarly past finding out. (p. 163)
+
+# Literature Review
+
+What others have found [@schneiderCattellHornCarrollTheoryCognitive2018].
+
+![APA Shiny](img/apa7maker.png){#ill-apashiny}
+
+# Methods
+
+Something about the method.
+
+# Results
+
+| Scale    | Description                    |
+|:---------|:-------------------------------|
+| Nominal  | Categories without an order    |
+| Ordinal  | Ordered categories             |
+| Interval | Quantities without a true zero |
+| Ratio    | Quantities with a true zero    |
+
+: Classic Scale Types. {#tbl-noir apa-note="My note"}
+
+
+![Path Diagram](sampleimage.png){#fig-appendfig apa-note="A *note* below the figure" fig-alt="A path diagram in which A causes B, and B causes C."}
+
+# Discussion
+
+## Figures and Illustrations
+
+::: {#fig-example}
+![](tests/sampleimage.png)
+
+A figure caption that says what the figure shows.
+:::
+
+::: {#tbl-example}
+| A | B |
+|---|---|
+| 1 | 2 |
+
+A table caption that says what the table shows.
+:::
+
+::: {#ill-example apa-note="The backtick is sometimes called the grave accent symbol."}
+![](img/keyboardwithbacktick.jpeg)
+
+The location of the backtick key on a standard keyboard.
+:::
+
+## Conclusion
+
+This is the answer.
+
+# References
+
+::: {#refs}
+:::
+
+# Measures Used {#apx-measures}
+
+The measures.
+
+# Consent Forms {#apx-consent}
+
+The forms.

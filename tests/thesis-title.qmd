@@ -1,0 +1,115 @@
+---
+title: "A Study of Whatever It Is That Graduate Students Study When They Are Studying Something at Considerable and Notable Length"
+shorttitle: "Thesis Title"
+author:
+  - name: Iwishiwere A. Graduate
+    corresponding: true
+    email: graduate@example.edu
+    affiliations:
+      - name: Temple University
+abstract: "An abstract that says what the work found, flush at the margin and double spaced, as the handbook asks."
+dedication: |
+  For the committee, who read it all.
+acknowledgments: |
+  Thanks to everyone who read a draft.
+bibliography: references.bib
+toc-depth: 1
+documentmode: thesis
+thesis:
+  type: Dissertation
+  submitted-to: the Temple University Graduate Board
+  degree: Doctor of Philosophy
+  date: May 2027
+  committee:
+    - name: Mentor Name
+      role: Advisory Chair
+      affiliation: TU Department
+    - name: Member Name
+      affiliation: TU Department
+    - name: Outside Name
+      role: External Member
+      affiliation: Another University
+format:
+  apaquarto-pdf: default
+  apaquarto-typst: default
+  apaquarto-docx: default
+  apaquarto-html: default
+---
+
+<!--
+documentmode: thesis is APA manuscript mode with the Temple University
+Graduate School's front matter, and the title page is the first of it.
+
+The title is set in capitals in an inverted pyramid: the first line longest,
+each line after it shorter. The lines are worked out in lua rather than left
+to each format, because a .docx can measure nothing while it is being
+written, so all four are given the same ones and the page has the same shape
+in all four.
+
+Under the title, three centred blocks -- what the work is, what degree it
+answers to, who wrote it -- each set off by a rule 5.5 inches wide, and the
+examining committee flush left at the foot.
+
+The page carries no number and no running head. After it come the copyright
+page, the abstract and the dedication, numbered in lower-case roman, and then
+the body, which begins again at 1 in arabic.
+
+The examining committee begins where the rules above it begin rather than out
+at the margin, and the abstract begins at the margin with no first line
+indented.
+
+The table of contents lists the front matter in capitals, then the chapters
+under a label reading CHAPTER with their arabic numbers, then the back
+matter: the references, and the appendices lettered in the order they are
+mentioned. It lists neither the copyright page nor itself, and it lists as many levels
+of heading as toc-depth asks for --- one here, which is the chapters and
+nothing under them, against the three quarto counts by default.
+
+In the body every level-one heading is in capitals, and over each chapter
+stands the word CHAPTER and its number, set like the heading under it. Only a
+chapter gets one: the references and the appendices have a part of their own
+to play. The CHAPTER lines are not in the contents, which lists a chapter by
+its own name, and each chapter begins a page of its own.
+-->
+
+# Introduction
+
+The body begins here.
+
+## Background
+
+Not listed: the contents lists chapters and no deeper unless asked.
+
+# Method
+
+What was done [@schneiderCattellHornCarrollTheoryCognitive2018].
+
+# References
+
+::: {#refs}
+:::
+
+# Measures Used {#apx-measures}
+
+The measures.
+
+# Consent Forms {#apx-consent}
+
+The forms.
+
+## Floats
+
+| A | B |
+|---|---|
+| 1 | 2 |
+
+: A table of two columns. {#tbl-scales}
+
+![A figure of some kind](sampleimage.png){#fig-diagram}
+
+::: {#ill-sketch}
+![](sampleimage.png)
+
+A sketch of the apparatus.
+:::
+

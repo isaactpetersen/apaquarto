@@ -1,6 +1,6 @@
 title: My Document in APA Style, Seventh Edition
 author: W. Joel Schneider
-version: 6.0.0
+version: 7.0.0
 quarto-required: ">=1.9.0"
 contributes:
   formats:
@@ -133,6 +133,11 @@ contributes:
           path: apafigtblappendix.lua
         - at: post-quarto
           path: floatwithsubfigure.lua
+        # Note down every float while it can still be read, for the lists
+        # of tables, figures and illustrations a dissertation carries. Before
+        # floatlatex.lua, which turns each one into latex.
+        - at: post-quarto
+          path: thesisfloats.lua
         # Set figures and tables the APA way in latex
         - at: post-quarto
           path: floatlatex.lua
@@ -172,6 +177,9 @@ contributes:
         # Process APA in-text citations (ampersand to and, possessive citation)
         - at: post-render
           path: apaandcite.lua
+        # The whole of a cross reference is the link, not just its number
+        - at: post-render
+          path: crossreflink.lua
         # Turn the blocks the filters above produced into latex. Last, so
         # that everything it writes out has been built by then.
         - at: post-render
@@ -179,12 +187,30 @@ contributes:
         # Warn when a pdf standard cannot work with the document's tables
         - at: post-render
           path: apapdfstandard.lua
+        # The title page of a dissertation or thesis, in every format.
+        # Last, so that what it writes for each format is passed straight
+        # through rather than picked over by the filters above.
+        - at: post-render
+          path: thesisfrontmatter.lua
     native: default
     html:
+      crossref:
+        custom:
+          - kind: float
+            reference-prefix: Illustration
+            key: ill
+            latex-env: illustration
       filters:
         # Place tinytable tables with tbl-align, left by default
         - at: post-quarto
           path: apatinytablehtml.lua
+        # The table of contents list-of-contents asks for
+        - at: post-render
+          path: htmlcontents.lua
+        # The colour linkcolor, urlcolor, citecolor, filecolor and
+        # toccolor ask a link to take
+        - at: post-render
+          path: htmllinkcolor.lua
       toc: true
       toc-location: left
       anchor-sections: false
@@ -214,6 +240,12 @@ contributes:
         opts_chunk: 
           dev: svglite
     pdf:
+      crossref:
+        custom:
+          - kind: float
+            reference-prefix: Illustration
+            key: ill
+            latex-env: illustration
       # Plain latex. There is no apa7 class here: the title page, the
       # headings, the running head and the notes below floats arrive as
       # ordinary blocks from the same filters that build the .html, the .docx
@@ -251,9 +283,11 @@ contributes:
         - margin=1in
       indent: true
       colorlinks: true
-      linkcolor: blue
-      citecolor: blue
-      urlcolor: blue
+      linkcolor: apalink
+      citecolor: apalink
+      urlcolor: apalink
+      # Pandoc's own default here is Maroon, which matches nothing else.
+      filecolor: apalink
       number-sections: false
       documentmode: man
       include-in-header:
@@ -262,6 +296,12 @@ contributes:
         opts_chunk:
           dev: ragg_png
     docx: 
+      crossref:
+        custom:
+          - kind: float
+            reference-prefix: Illustration
+            key: ill
+            latex-env: illustration
       reference-doc: apaquarto.docx
       filters: 
         # Add custom styles to docx
@@ -277,10 +317,28 @@ contributes:
         # and papersize options
         - at: post-render
           path: docxreferencedoc.lua
+        # The lists of figures and tables, and the headings the table of
+        # contents should pass over. After apacaption.lua, which is what
+        # gives a figure its number and its title, and after
+        # docxreferencedoc.lua, whose page size the lists measure their
+        # tab stop against.
+        - at: post-render
+          path: docxcontents.lua
+        # The colour linkcolor, urlcolor, citecolor and filecolor ask a
+        # link to take. After docxreferencedoc.lua, whose patched styles it
+        # adds to.
+        - at: post-render
+          path: docxlinkcolor.lua
       knitr: 
         opts_chunk: 
           dev: ragg_png
     typst:
+      crossref:
+        custom:
+          - kind: float
+            reference-prefix: Illustration
+            key: ill
+            latex-env: illustration
       # Draw R figures with svglite, as the .html format does.
       #
       # Quarto leaves typst on R's own svg device, which draws through cairo,

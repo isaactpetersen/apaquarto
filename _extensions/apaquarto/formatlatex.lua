@@ -19,6 +19,11 @@ end
 local utilsapa = require("utilsapa")
 
 local mode = "man"
+
+-- Whether the document carries a list of contents, figures or tables.
+-- Set in blocks() and read in render_front(), which is where the body's
+-- title is written out.
+local haslist = false
 local shorttitle = nil
 local line_numbers = false
 local first_page = nil
@@ -73,6 +78,86 @@ end
 -- from where it begins in the issue rather than from one. Only a whole number
 -- is taken: the value is written straight into a latex counter, and anything
 -- else there is a compilation error rather than a page number.
+-- A colour field written as an html code.
+--
+-- latex takes a colour by name, and pandoc's template hands hyperref the
+-- name as it stands: linkcolor: "#cc0000" reaches the preamble as
+-- \hypersetup{linkcolor={\#cc0000}} and the render stops on it. xcolor
+-- will take the code, so a field written that way is defined as a colour of
+-- its own and the field rewritten to name that colour. A field naming a
+-- colour xcolor already knows -- teal, violet, one of the rest -- is left
+-- alone, which is how they have always worked.
+local colour_fields = {
+  "linkcolor", "urlcolor", "citecolor", "filecolor", "toccolor"
+}
+
+local function define_html_colours(m)
+  for _, field in ipairs(colour_fields) do
+    if m[field] ~= nil then
+      local text = utilsapa.stringify(m[field])
+      if text:sub(1, 1) == "#" then
+        local hex = utilsapa.colour_hex(m[field])
+        if hex then
+          local name = "apacolor" .. field:gsub("color$", "")
+          quarto.doc.include_text("in-header",
+            "\\definecolor{" .. name .. "}{HTML}{" .. hex .. "}")
+          m[field] = pandoc.MetaString(name)
+        else
+          quarto.log.warning(field .. " is \"" .. text ..
+            "\", which is not a colour, so it was left out.")
+          m[field] = nil
+        end
+      end
+    end
+  end
+  return m
+end
+
+-- filecolor, for the links markdown actually writes.
+--
+-- hyperref colours a link by the kind of link it decides it is, and it knows
+-- a file link by its scheme. [text](figure.png) reaches it as an ordinary
+-- url, so filecolor applied to nothing a document was likely to contain. The
+-- colour is set around such a link instead, in a group of its own, and only
+-- when it differs from urlcolor -- which it does not by default, both being
+-- apalink, and a document that leaves them alone is written exactly as it
+-- was before.
+local file_colour = nil
+
+local function asked_for_file_colour(m)
+  local file = m.filecolor and utilsapa.stringify(m.filecolor) or nil
+  local url = m.urlcolor and utilsapa.stringify(m.urlcolor) or nil
+  if file == nil or file == "" or file == url then return nil end
+  return file
+end
+
+local function file_link(link)
+  if file_colour == nil then return nil end
+  if link.attributes["apa-filecolor"] ~= nil then return nil end
+  local target = link.target
+  if target:match("^#") or target:match("^%a[%w+.-]*:") then return nil end
+  link.attributes["apa-filecolor"] = "1"
+  return pandoc.Inlines({
+    pandoc.RawInline("latex",
+      "\\begingroup\\hypersetup{urlcolor=" .. file_colour .. "}"),
+    link,
+    pandoc.RawInline("latex", "\\endgroup"),
+  })
+end
+
+-- The colour a document asks for in its lists. Pandoc's own hypersetup
+-- carries linkcolor, filecolor, citecolor and urlcolor; toccolor it leaves
+-- out, so apaquarto reads it here and the lists honour it.
+local toc_colour = nil
+local toc_depth = nil
+
+local function asked_for_toc_colour(m)
+  if m.toccolor == nil then return nil end
+  local name = utilsapa.stringify(m.toccolor)
+  if name == "" or name == "false" then return nil end
+  return name
+end
+
 local function asked_for_first_page(m)
   if m["first-page"] == nil then return nil end
   local text = utilsapa.stringify(m["first-page"])
@@ -127,6 +212,30 @@ local function meta(m)
   if mode == "jou" then
     quarto.doc.include_text("in-header",
       "\\AtBeginDocument{\\apalongtableastabular}")
+  end
+
+  -- A student paper carries the page number and nothing else. APA seventh
+  -- edition drops the running head from student work, which is what the
+  -- typst format does and what the apa7 class did for the .pdf before 6.0.0
+  -- stopped using it: a student paper has carried a manuscript's running
+  -- head ever since. Issue #166.
+  if mode == "stu" then
+    quarto.doc.include_text("in-header", "\\apastudenthead")
+  end
+
+  -- A dissertation sets a block quotation, a note and the entries of its
+  -- reference list single spaced, indents a quotation half an inch from both
+  -- margins and a note's first line half an inch, and keeps a page from
+  -- breaking after the first line of a paragraph or before its last. The reference list is patched at the start of the document
+  -- rather than in the preamble: the environment quarto writes it in is one
+  -- of pandoc's own, and where an include lands among those is a detail of
+  -- pandoc's template rather than something to lean on.
+  if mode == "thesis" then
+    quarto.doc.include_text("in-header", "\\apathesisquote")
+    quarto.doc.include_text("in-header", "\\apathesisnotes")
+    quarto.doc.include_text("in-header", "\\apathesispenalties")
+    quarto.doc.include_text("in-header",
+      "\\AtBeginDocument{\\apathesisreferences}")
   end
 
   -- A published article is set in two columns and carries the authors' names
@@ -204,6 +313,15 @@ local function meta(m)
   -- table here is set as a tabular instead, so the patch has nothing to do.
   line_numbers = asked_for_line_numbers(m)
   first_page = asked_for_first_page(m)
+  m = define_html_colours(m)
+  toc_colour = asked_for_toc_colour(m)
+  -- Quarto hands toc-depth to pandoc as a writer option, so it is read from
+  -- there rather than from the metadata. Only a depth that is not the
+  -- article class's own three is written out, so that a document which never
+  -- mentions the field is set exactly as it was before.
+  local depth = utilsapa.toc_depth(m, 3)
+  if depth ~= 3 then toc_depth = depth end
+  file_colour = asked_for_file_colour(m)
   if line_numbers then
     quarto.doc.include_text("in-header",
       "\\usepackage[nolongtablepatch]{lineno}")
@@ -285,8 +403,13 @@ local function render_front(list, jou)
       out:extend(command(jou and "apajoutitle" or "apatitle", block.content))
 
     elseif is_title(block) and block.identifier == "firstheader" then
-      -- The title again, at the head of the body.
-      if paged() then out:insert(raw("\\clearpage")) end
+      -- The title again, at the head of the body. A page of its own in the
+      -- modes that have a title page, and in any mode that has put a list of
+      -- contents, figures or tables in front of it -- jou excepted, where
+      -- the masthead owns the top of the first page.
+      if paged() or (haslist and not jou) then
+        out:insert(raw("\\clearpage"))
+      end
       out:extend(command("apatitle", block.content))
 
     elseif is_titlepage_heading(block) then
@@ -331,6 +454,19 @@ local function blocks(doc)
   -- it.
   local rest = pandoc.List({})
   local masthead, wide, narrow, note
+  -- Whether any of the three lists is in the document. Each of them starts a
+  -- page of its own, and the body wants one too: in man and stu the title
+  -- page sees to that, but doc has no title page and ran the body on under
+  -- the last list.
+  haslist = false
+  for _, block in ipairs(doc.blocks) do
+    if block.t == "Div" and (block.classes:includes("list-of-contents")
+        or block.classes:includes("list-of-figures")
+        or block.classes:includes("list-of-tables")) then
+      haslist = true
+    end
+  end
+
   for _, block in ipairs(doc.blocks) do
     if masthead == nil and front_div(block, "JournalMasthead") then
       masthead = block
@@ -340,6 +476,24 @@ local function blocks(doc)
       narrow = block
     elseif note == nil and front_div(block, "JournalNote") then
       note = block
+    elseif block.t == "Div" and (block.classes:includes("list-of-contents")
+        or block.classes:includes("list-of-figures")
+        or block.classes:includes("list-of-tables")) then
+      -- A list stands on a page of its own, except in jou: a published
+      -- article runs them on in the columns, which is what typst's journal
+      -- mode does with the same three.
+      --
+      -- The figures and tables are read back out of the .lof and the .lot,
+      -- which every float has been writing its line into as it was set. The
+      -- heading and the shape of a line are in apalatex.tex.
+      if mode ~= "jou" then rest:insert(raw("\\clearpage")) end
+      if block.classes:includes("list-of-contents") then
+        rest:insert(raw("\\apatableofcontents"))
+      elseif block.classes:includes("list-of-figures") then
+        rest:insert(raw("\\apalistoffigures"))
+      else
+        rest:insert(raw("\\apalistoftables"))
+      end
     else
       rest:insert(block)
     end
@@ -382,6 +536,18 @@ local function blocks(doc)
   -- head of the body, after the page style, so that the first page carries it.
   if first_page then
     out:insert(raw("\\setcounter{page}{" .. first_page .. "}"))
+  end
+
+  -- toccolor, which pandoc's latex template does not write out. The
+  -- lists are apaquarto's own, so honouring it is apaquarto's to do.
+  if toc_colour then
+    out:insert(raw("\\renewcommand{\\apatoccolor}{" .. toc_colour .. "}"))
+  end
+
+  -- And how deep it goes, which is quarto's toc-depth. The article class
+  -- counts three levels of its own accord and nothing read the field.
+  if toc_depth then
+    out:insert(raw("\\renewcommand{\\apatocdepth}{" .. toc_depth .. "}"))
   end
 
   -- The author note, raised in the first column so that it falls to the foot
@@ -452,6 +618,6 @@ end
 
 return {
   { Meta = meta },
-  { Div = div, RawBlock = guard_longtable },
+  { Div = div, RawBlock = guard_longtable, Link = file_link },
   { Pandoc = function(doc) return pandoc.Pandoc(blocks(doc), doc.meta) end },
 }

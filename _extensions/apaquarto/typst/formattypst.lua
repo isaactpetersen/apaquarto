@@ -71,6 +71,11 @@ local utilsapa = require("utilsapa")
 local bodyindent = "apaparindent(firstlineindent)"
 local hangingindent = "0.5in"
 
+-- Whether the reference list takes a dissertation's line spacing: single
+-- spaced within an entry and a double space between one entry and the next.
+-- The template's thesisreferences is what sets it.
+local thesisrefs = false
+
 -- Numbered lines, which APA wants on a manuscript sent out for review.
 --
 -- apa7 draws them with lineno and leaves that package's own look alone: a
@@ -137,6 +142,8 @@ local function set_body_indent(meta)
   elseif mode == "doc" then
     bodyindent = "apaparindent(docfirstlineindent)"
     hangingindent = "docfirstlineindent"
+  elseif mode == "thesis" then
+    thesisrefs = true
   end
 end
 
@@ -150,19 +157,32 @@ local tablenotes = {}
 -- it twice. A table from a code chunk with apa-twocolumn is the usual case.
 local divnotes = {}
 
--- An image with alt text is written straight to typst markup before
--- apanote.lua runs, so there is no image left for it to take the note from
--- and the note is lost. Those figures are handled here instead.
-local function has_alt(float)
-  local alt = false
+-- Whether apanote.lua is going to write this float's note, which is the one
+-- case where writing it here as well would print it twice.
+--
+-- A note written on an image --- ![caption](x.png){#fig-a apa-note="..."} ---
+-- is carried by the image and by the float around it alike. apanote.lua lifts
+-- such a note off the image and writes it after the div, so this stands down
+-- for those. An image given alt text is the exception: quarto writes it
+-- straight to typst markup before apanote.lua runs, so there is no image left
+-- to lift from and the note has to be written here.
+--
+-- A note written on the float itself --- ::: {#fig-a apa-note="..."} --- sits
+-- on no image at all, so apanote.lua has nothing to lift and here is the only
+-- place it can be written. That is the shape a table takes, and the shape an
+-- Illustration, or any other kind of float a document declares for itself
+-- under crossref.custom, is usually written in.
+local function note_on_image(float)
+  local lifted = false
   float.content:walk {
     Image = function(img)
-      if img.attributes["fig-alt"] then
-        alt = true
+      if img.attributes and img.attributes["apa-note"]
+          and not img.attributes["fig-alt"] then
+        lifted = true
       end
     end
   }
-  return alt
+  return lifted
 end
 
 -- ---------------------------------------------------------------------------
@@ -389,11 +409,11 @@ local function floatnote(float)
   if divnotes[float.identifier] then
     return nil
   end
-  if float.type ~= "Table" and not (float.type == "Figure" and has_alt(float)) then
-    return nil
-  end
   local note = tablenotes[float.identifier] or float.attributes["apa-note"]
   if not note then
+    return nil
+  end
+  if note_on_image(float) then
     return nil
   end
   local prefix = pandoc.Para({
@@ -516,6 +536,13 @@ return {
       
       -- Hanging indent on refs
       if div.identifier == "refs" then
+        -- A dissertation's list is wrapped in thesisreferences, which holds
+        -- the line spacing as well, and the indent goes inside that wrapper:
+        -- everything set there stops with the list, so nothing has to be put
+        -- back after it.
+        if thesisrefs then
+          return {pandoc.RawBlock("typst", "#thesisreferences[#set par(first-line-indent: 0in, hanging-indent: " .. hangingindent .. ")"), div, pandoc.RawBlock("typst", "]") }
+        end
         return {pandoc.RawBlock("typst", "#set par(first-line-indent: 0in, hanging-indent: " .. hangingindent .. ")"), div, pandoc.RawBlock("typst","#set par(first-line-indent: " .. bodyindent .. ", hanging-indent: 0in)") }
       end
       

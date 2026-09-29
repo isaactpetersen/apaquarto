@@ -106,6 +106,23 @@
 % arrive as ordinary blocks from apaquarto's filters, and this file only says
 % how they are set. Each command below is used by formatlatex.lua.
 
+% The colour typst gives a link, which is its own named blue. The .pdf
+% asks for it by name in _extension.yml; the name has to exist before
+% pandoc's own hypersetup names it, and this file is read first.
+/definecolor{apalink}{HTML}{0074D9}
+% A link inside one of the lists takes the colour of the text around it,
+% which is what typst's outlines do with theirs. toccolor overrides it:
+% pandoc's latex template writes no toccolor of its own, so the lists
+% being apaquarto's own means honouring it here. formatlatex.lua
+% renews this when a document names one.
+/definecolor{apatext}{HTML}{000000}
+/newcommand{/apatoccolor}{apatext}
+
+% How many levels of heading the contents lists, which is quarto's
+% toc-depth. The article class counts three of its own accord;
+% formatlatex.lua renews this where a document asks for another number.
+/newcommand{/apatocdepth}{3}
+
 /usepackage{setspace}
 /usepackage{fancyhdr}
 /usepackage{titlesec}
@@ -167,6 +184,32 @@
   /fancyhead[RO]{/thepage}%
   /fancyhead[CE]{{/apaheadsize/apaauthorline}}%
   /fancyhead[CO]{{/apaheadsize/apashorttitle}}}
+
+% The head a student paper carries: the page number and nothing else. APA
+% seventh edition drops the running head from student work, which is what
+% apaquarto's typst format does and what the apa7 class did for the .pdf
+% before 6.0.0 stopped using it. Issue #166.
+/newcommand{/apastudenthead}{%
+  /fancyhf{}%
+  /fancyhead[R]{/thepage}}
+
+% The head a dissertation carries, which is none. The Temple University
+% Graduate School's handbook asks for the page number and nothing else, and
+% the dissertations it publishes set it at the centre of the foot. The title
+% page is counted but not numbered, which /thispagestyle{empty} does where the
+% page is built.
+/newcommand{/apathesishead}{%
+  /fancyhf{}%
+  /fancyfoot[C]{/thepage}}
+
+% The leader dots of a table of contents, set closer together than /dotfill
+% sets them. /dotfill leaves 0.44em between dots, which reads as a dotted
+% line rather than as a leader; a contents wants them tighter, and tighter is
+% what the Graduate School's own template shows.
+/makeatletter
+/newcommand{/apadotfill}{%
+  /leavevmode/cleaders/hb@xt@ .3em{/hss./hss}/hfill/kern/z@}
+/makeatother
 
 % Float placement in a published article.
 %
@@ -239,7 +282,7 @@
 % The abstract, the impact statement and the lines under them: smaller, and in
 % a block narrower than the masthead, centred under the byline. apa7 sets its
 % journal abstract in a 4.6875in parbox, which is where the width comes from.
-% The text inside is set flush left, as it is in the typst masthead.
+% The text inside is justified, like the body of the article below it.
 /newlength{/apajounarrowwidth}
 /setlength{/apajounarrowwidth}{4.6875in}
 % parskip as well as leading: typst leaves a line and a bit between the
@@ -250,7 +293,7 @@
    /begin{minipage}{/apajounarrowwidth}%
    /fontsize{9}{11}/selectfont
    /setlength{/parskip}{6pt}%
-   /setlength{/parindent}{0pt}/setlength{/RaggedRightParindent}{0pt}/RaggedRight}
+   /setlength{/JustifyingParindent}{0pt}/justifying/setlength{/parindent}{0pt}}
   {/end{minipage}/par/vspace{10pt}}
 
 % The impact statement, ruled off from the abstract above it and the keywords
@@ -304,10 +347,14 @@
 /setlength{/apajounoteindent}{1.1em}
 /newsavebox{/apajounotebox}
 
+% Justified, like the body of the article above it. The orcid lines inside
+% the note are not: apajouorcid sets them flush left again, since justifying
+% one short name-and-link paragraph stretches its gaps across the measure.
 /newcommand{/apajounotetext}{%
   /fontsize{9}{11}/selectfont
-  /setlength{/parindent}{/apajounoteindent}%
-  /setlength{/RaggedRightParindent}{/apajounoteindent}/RaggedRight}
+  /setlength{/JustifyingParindent}{/apajounoteindent}%
+  /justifying
+  /setlength{/parindent}{/apajounoteindent}}
 
 /newcommand{/apajounoterule}{%
   /noindent/rule{/linewidth}{0.5pt}%
@@ -329,6 +376,60 @@
       /usebox{/apajounotebox}%
     /end{figure}%
   /fi}
+
+% --- Lists of figures and tables ---------------------------------------------
+% APA sets these as a plain list: the float's name and its title on one line,
+% then a leader out to the page number. Nothing is indented and nothing is
+% numbered again -- floatlatex.lua has already written each line as "Figure 1.
+% The Figure Caption", the line the .docx and typst lists give, so latex has
+% only to place it.
+%
+% /l@figure and /l@table are what /listoffigures and /listoftables use
+% for each line, and /@dottedtocline is the class's own: it sets the text,
+% fills out to the page number with dots, and hangs the turn-over lines. Its
+% two lengths are the indent before the text and the room kept for a number
+% in front of it. Both are zero, since the number is part of the text here
+% and the class would otherwise indent the line and leave a gap for it.
+/makeatletter
+/renewcommand*/l@figure{/@dottedtocline{1}{0em}{0em}}
+/let /l@table /l@figure
+/makeatother
+
+% The table of contents. Its lines are set like the lists of figures and
+% tables above -- the heading, a leader, the page -- but indented a level at
+% a time, which is what tells a subsection from a section.
+/makeatletter
+/renewcommand*/l@section{/@dottedtocline{1}{0em}{0em}}
+/renewcommand*/l@subsection{/@dottedtocline{2}{1.5em}{0em}}
+/renewcommand*/l@subsubsection{/@dottedtocline{3}{3em}{0em}}
+/makeatother
+
+/newcommand{/apatableofcontents}{%
+  /begingroup
+  /hypersetup{linkcolor=/apatoccolor,citecolor=/apatoccolor,urlcolor=/apatoccolor}%
+  /renewcommand{/contentsname}{Table of Contents}%
+  /setcounter{tocdepth}{/apatocdepth}%
+  /tableofcontents
+  /endgroup}
+
+% Whether a list starts a page of its own is formatlatex.lua's to say: it
+% does in every mode but jou, where a published article runs the lists on
+% in the columns as typst's journal mode does.
+% The heading each list carries, set like any other section heading. The
+% article class writes the heading itself from /listfigurename, so the name
+% is set first and the list follows.
+/newcommand{/apalistoffigures}{%
+  /begingroup
+  /hypersetup{linkcolor=/apatoccolor,citecolor=/apatoccolor,urlcolor=/apatoccolor}%
+  /renewcommand{/listfigurename}{List of Figures}%
+  /listoffigures
+  /endgroup}
+/newcommand{/apalistoftables}{%
+  /begingroup
+  /hypersetup{linkcolor=/apatoccolor,citecolor=/apatoccolor,urlcolor=/apatoccolor}%
+  /renewcommand{/listtablename}{List of Tables}%
+  /listoftables
+  /endgroup}
 
 % --- Journal masthead -------------------------------------------------------
 % The band a published article carries at the head of its first page: the
@@ -413,9 +514,15 @@
 % body size. Written in em so that it follows the type size, whatever the
 % writer has asked for.
 %
-% RaggedRight reads RaggedRightParindent when it is switched on, so the length
-% is set first and RaggedRight asked for again afterwards; setting parindent
-% alone would be undone by the ragged setting already in force.
+% The body of a published article is justified, where a manuscript is set
+% flush left with a ragged right edge. The preamble asks for RaggedRight,
+% which is right for the other three modes, so journal mode turns it back off
+% with ragged2e's own /justifying.
+%
+% /justifying reads /JustifyingParindent the way /RaggedRight reads
+% /RaggedRightParindent, so the length is set before it is switched on.
+% /parindent is set as well, since the two are only kept in step by whichever
+% of the pair was asked for last.
 %
 % Written into the body rather than the preamble. The half inch a manuscript
 % takes is set further down the preamble than an in-header include reaches, so
@@ -423,9 +530,9 @@
 /newlength{/apajouparindent}
 /setlength{/apajouparindent}{1.1em}
 /newcommand{/apajournalindent}{%
-  /setlength{/parindent}{/apajouparindent}%
-  /setlength{/RaggedRightParindent}{/apajouparindent}%
-  /RaggedRight}
+  /setlength{/JustifyingParindent}{/apajouparindent}%
+  /justifying
+  /setlength{/parindent}{/apajouparindent}}
 
 % booktabs' rules take an optional trim argument, written /midrule(rl), which
 % they look for by peeking at the single character that follows the rule.
@@ -615,6 +722,81 @@
 /@ifundefined{cslhangindent}{}{/setlength{/cslhangindent}{0.5in}}
 /makeatother
 
+% --- A dissertation's line spacing ------------------------------------------
+% The Graduate School sets the body of a dissertation double spaced, but a
+% block quotation and the entries of the reference list single spaced, with a
+% double space between one entry and the next. Set for thesis mode by
+% formatlatex.lua.
+
+% Single spacing, and with it the space that has to stand between two entries
+% for them to read as double spaced: the skip the document is set with, less
+% the skip a single-spaced entry takes. /selectfont is what asks for the skip
+% to be worked out again --- setspace folds the stretch into the size command,
+% so /setstretch on its own leaves /baselineskip as it was.
+%
+% /setstretch rather than /singlespacing, which is /setstretch and a bare
+% /vskip/baselineskip after it, its "correction for coming into singlespace".
+% That skip is a line of space wherever this is used, and every one of them is
+% somewhere a line of space does not belong: under the heading of a reference
+% list, over a block quotation, and between the page column of a table of
+% contents and its first entry.
+/newlength{/apathesisentrysep}
+/newcommand{/apathesissingle}{%
+  /setlength{/apathesisentrysep}{/baselineskip}%
+  /setstretch{1}/selectfont
+  /addtolength{/apathesisentrysep}{-/baselineskip}}
+
+% A block quotation is indented half an inch from both margins, where a LaTeX
+% quote takes the 2.5em of /leftmargini, and is single spaced.
+/newcommand{/apathesisquote}{%
+  /renewenvironment{quote}
+    {/list{}{/leftmargin=0.5in/rightmargin=0.5in}%
+     /item/relax/apathesissingle}
+    {/endlist}}
+
+% Quarto writes the reference list as pandoc's CSLReferences list, whose
+% entries are the items of a LaTeX list. The spacing is appended to what that
+% environment does rather than run ahead of it, because the list sets
+% /itemsep itself, from the entry spacing quarto passes, which is zero.
+% /@outerparskip is set there too. A list that opens directly under a heading
+% is given no top separation at all --- LaTeX leaves the space to the heading
+% --- and takes /@outerparskip less /parskip instead, so that is where the
+% space for the entry opening the list goes: it stands as far below the
+% heading as the entries stand from one another, which is what the other three
+% formats do. Guarded: a document with no bibliography never defines the
+% environment.
+/makeatletter
+/newcommand{/apathesisreferences}{%
+  /@ifundefined{CSLReferences}{}{%
+    /apptocmd{/CSLReferences}%
+      {/apathesissingle
+       /setlength{/itemsep}{/apathesisentrysep}%
+       /advance/@outerparskip/apathesisentrysep}{}{}}}
+/makeatother
+
+% A numbered note: single spaced, which setspace already sets a footnote, with
+% its first line indented half an inch and a double space between one note and
+% the next. /footnotesep is the height of the strut each note opens with, and
+% a note stands that far below the depth of the note before it, so two of the
+% note's own lines less that depth is what leaves a double space between them.
+% Worked out at /footnotesize with the stretch taken off, which is the size a
+% note is set at and the spacing setspace gives it.
+/makeatletter
+/newcommand{/apathesisnotes}{%
+  /renewcommand/@makefntext[1]{%
+    /setlength{/parindent}{0.5in}%
+    /indent/@makefnmark/,##1}%
+  {/apathesissingle/footnotesize
+   /global/footnotesep=/dimexpr 2/baselineskip - /dp/strutbox/relax}}
+/makeatother
+
+% Widows and orphans are to be avoided, so a page breaks neither after the
+% first line of a paragraph nor before its last.
+/newcommand{/apathesispenalties}{%
+  /widowpenalty=10000
+  /clubpenalty=10000
+  /displaywidowpenalty=10000}
+
 % A published article hangs its references by the same amount it indents the
 % first line of a paragraph by, which is a good deal less than the half inch a
 % manuscript takes: half an inch of a column this narrow leaves the turned
@@ -625,6 +807,13 @@
 /makeatletter
 /newcommand{/apajouhangindent}{%
   /@ifundefined{cslhangindent}{}{/setlength{/cslhangindent}{/apajouparindent}}}
+/makeatother
+/makeatletter
+/@ifpackageloaded{float}{}{/usepackage{float}}
+/floatstyle{plain}
+/@ifundefined{c@chapter}{/newfloat{illustration}{h}{loill}}{/newfloat{illustration}{h}{loill}[chapter]}
+/floatname{illustration}{Illustration}
+/newcommand*/listofillustrations{/listof{illustration}{List of Illustrations}}
 /makeatother
 /makeatletter
 /@ifpackageloaded{caption}{}{/usepackage{caption}}
@@ -685,10 +874,10 @@
 /makeatother
 /hypersetup{
   colorlinks=true,
-  linkcolor={blue},
-  filecolor={Maroon},
-  citecolor={blue},
-  urlcolor={blue},
+  linkcolor={apalink},
+  filecolor={apalink},
+  citecolor={apalink},
+  urlcolor={apalink},
   pdfcreator={LaTeX via pandoc}}
 
 
@@ -746,8 +935,10 @@ Author, Test University, Email:
 
 /section{Method}/label{method}
 
-See Table~/ref{tbl-md}, Table~/ref{tbl-chunk}, Table~/ref{tbl-apx} and
-Figure~/ref{fig-apx}.
+See /hyperref[tbl-md]{Table~/ref*{tbl-md}},
+/hyperref[tbl-chunk]{Table~/ref*{tbl-chunk}},
+/hyperref[tbl-apx]{Table~/ref*{tbl-apx}} and
+/hyperref[fig-apx]{Figure~/ref*{fig-apx}}.
 
 /begin{table}[H]
 
@@ -760,6 +951,8 @@ Figure~/ref{fig-apx}.
 /apafloattitle{Table 1}
 
 /apafloatcaption{A markdown table.}
+
+/addcontentsline{lot}{table}{Table 1. A markdown table.}
 
 {/def/LTcaptype{none} % do not increment counter
 /begin{longtable}[]{@{}ll@{}}
@@ -794,6 +987,8 @@ A & 1 //
 /apafloattitle{Table 2}
 
 /apafloatcaption{A table written as a code chunk.}
+
+/addcontentsline{lot}{table}{Table 2. A table written as a code chunk.}
 
 {/def/LTcaptype{none} % do not increment counter
 /begin{longtable}[]{@{}rr@{}}
@@ -856,8 +1051,9 @@ NOFOOTROW & n4 //
 
 /setlength{/parindent}{1em}
 
-Text in the appendix, which refers to Table~/ref{tbl-apx} and to
-Figure~/ref{fig-apx}.
+Text in the appendix, which refers to
+/hyperref[tbl-apx]{Table~/ref*{tbl-apx}} and to
+/hyperref[fig-apx]{Figure~/ref*{fig-apx}}.
 
 /begin{table}[H]
 
@@ -870,6 +1066,8 @@ Figure~/ref{fig-apx}.
 /apafloattitle{Table A1}
 
 /apafloatcaption{A table in an appendix.}
+
+/addcontentsline{lot}{table}{Table A1. A table in an appendix.}
 
 {/def/LTcaptype{none} % do not increment counter
 /begin{longtable}[]{@{}ll@{}}
@@ -906,6 +1104,8 @@ B & 2 //
 /apafloatcaption{A figure in an appendix.}
 
 /apafigureskip
+
+/addcontentsline{lof}{figure}{Figure A1. A figure in an appendix.}
 
 /pandocbounded{/includegraphics[keepaspectratio]{sampleimage.png}}
 

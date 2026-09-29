@@ -30,7 +30,22 @@ local noteword = "Note"
 local floatsintext = true
 local mode = "man"
 
+-- A float a document declared for itself, under crossref.custom: what it is
+-- called against the latex environment quarto builds for it. An Illustration
+-- is the one apaquarto ships. Such a float is set the way a figure is, but it
+-- carries its own name and counts in a sequence of its own, so neither can be
+-- taken from the figure.
+local customfloats = {}
+
 local function meta(m)
+  if m.crossref and m.crossref.custom then
+    for _, entry in ipairs(m.crossref.custom) do
+      local name = entry["reference-prefix"]
+        and utilsapa.stringify(entry["reference-prefix"])
+      local env = entry["latex-env"] and utilsapa.stringify(entry["latex-env"])
+      if name and env then customfloats[name] = env end
+    end
+  end
   if m.documentmode then mode = utilsapa.stringify(m.documentmode) end
   if m.language then
     if m.language["crossref-fig-title"] then
@@ -79,7 +94,12 @@ end
 -- "Figure 1", or "Figure A1" in an appendix, where apaquarto leaves the letter
 -- in a prefix attribute.
 local function label_inlines(float)
-  local word = (float.type == "Table") and tableword or figureword
+  local word = figureword
+  if float.type == "Table" then
+    word = tableword
+  elseif float.type and float.type ~= "" and float.type ~= "Figure" then
+    word = tostring(float.type)
+  end
   local n = number(float)
   if not n then return pandoc.Inlines({ pandoc.Str(word) }) end
   local prefix = (float.attributes or {}).prefix or ""
@@ -127,6 +147,9 @@ local function label_blocks(float)
     return pandoc.List({})
   end
   local counter = (float.type == "Table") and "table" or "figure"
+  if float.type and customfloats[float.type] then
+    counter = customfloats[float.type]
+  end
   local out = pandoc.List({})
   local n = number(float)
   if n and n:match("^%d+$") then
@@ -522,6 +545,26 @@ local function processfloat(float)
       blocks:insert(raw("\\apafigureskip"))
     end
   end
+
+  -- The line this float puts in the list of figures or the list of tables:
+  -- "Figure 1. The Figure Caption", which is the line .docx and typst give.
+  -- Written whether or not the document asks for such a list -- latex keeps
+  -- these in a file of its own and prints nothing unless \\listoffigures or
+  -- \\listoftables is there to read them back.
+  local entry = pandoc.List({})
+  entry:extend(label_inlines(float))
+  if caption then
+    entry:insert(pandoc.Str("."))
+    entry:insert(pandoc.Space())
+    entry:extend(caption)
+  end
+  local listfile = istable and "lot" or "lof"
+  local listkind = istable and "table" or "figure"
+  local addline = pandoc.List({ pandoc.RawInline("latex",
+    "\\addcontentsline{" .. listfile .. "}{" .. listkind .. "}{") })
+  addline:extend(entry)
+  addline:insert(pandoc.RawInline("latex", "}"))
+  blocks:insert(pandoc.Plain(addline))
 
   local ncol = panel_columns(float)
   local panelnotes = nil

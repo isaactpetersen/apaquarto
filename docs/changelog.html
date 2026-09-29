@@ -174,6 +174,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#future-version-wishlist" id="toc-future-version-wishlist" class="nav-link active" data-scroll-target="#future-version-wishlist">Future Version Wishlist</a></li>
+  <li><a href="#version-6.0.1" id="toc-version-6.0.1" class="nav-link" data-scroll-target="#version-6.0.1">Version 6.0.1</a></li>
   <li><a href="#version-6.0.0" id="toc-version-6.0.0" class="nav-link" data-scroll-target="#version-6.0.0">Version 6.0.0</a></li>
   <li><a href="#version-5.0.18" id="toc-version-5.0.18" class="nav-link" data-scroll-target="#version-5.0.18">Version 5.0.18</a></li>
   <li><a href="#version-5.0.17" id="toc-version-5.0.17" class="nav-link" data-scroll-target="#version-5.0.17">Version 5.0.17</a></li>
@@ -293,6 +294,21 @@ window.Quarto = {
 <ul>
 <li>Right-align equation numbers</li>
 </ul></li>
+</ul>
+</section>
+<section id="version-6.0.1" class="level1">
+<h1>Version 6.0.1</h1>
+<ul>
+<li>2026-09-26</li>
+<li>Made both journal modes (apauarto-pdf and apaquarto-typst) fully justified in their body text but not in markdown table text.</li>
+<li>Added support for list of tables and list of figures in .docx, .typst, and .pdf.</li>
+<li>Table of contents for .docx can be added setting <code>list-of-contents: true</code>. A message letting the user know how to update the page fields is displayed.</li>
+<li><code>list-of-contents: true</code> gives a table of contents in every format: typst and the .pdf build one of their own, .docx is built by hand, and .html lists the headings as links, since it has no pages to number.</li>
+<li>In .html a contents is added only when Quarto’s own is not already in the margin, so <code>toc: false</code> is needed alongside <code>list-of-contents: true</code> there. A list of figures or of tables is not built for .html at all, which has no pages to find.</li>
+<li>An entry in any of the lists reads <code>Figure 1. The Figure Caption</code>, in .docx, typst and .pdf alike.</li>
+<li>The apa7 class options <code>donotrepeattitle</code>, <code>draftfirst</code>, <code>draftall</code> and <code>nocorrespondence</code> have done nothing since 6.0.0, when the .pdf stopped using that class. <code>suppress-title-introduction</code> and <code>suppress-corresponding-paragraph</code> do the first and the last of them, in every format.</li>
+<li>Footnotes in .docx are single spaced, as recommended at <a href="https://apastyle.apa.org/style-grammar-guidelines/paper-format/line-spacing">apastyle.apa.org</a></li>
+<li>Every format is responsive to Quarto’s <code>linkcolor</code>, <code>filecolor</code>, <code>citecolor</code>, <code>urlcolor</code> and <code>toccolor</code>, journal mode included, and <code>xcolor</code>’s table resolves a colour’s name so that <code>green</code> is the same green in all four.</li>
 </ul>
 </section>
 <section id="version-6.0.0" class="level1">

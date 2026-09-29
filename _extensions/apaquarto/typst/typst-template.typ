@@ -26,6 +26,24 @@
 #let joufirstlineindent = 0.15in
 #let docfirstlineindent = 0.25in
 
+// A dissertation sets its body double spaced, but a block quotation and the
+// entries of its reference list single spaced. thesissingleleading is typst's
+// own leading, which is what single spacing is here the way thesisleading is
+// what double spacing is.
+#let thesissingleleading = 0.65em
+#let thesisleading = 18pt
+
+// The entries of a dissertation's reference list: single spaced within an
+// entry, with a double space between one entry and the next, which is the
+// space the body's own lines stand apart. formattypst.lua wraps the list in
+// this rather than setting the spacing around it, so that the settings reach
+// the entries and stop there --- an appendix follows the references and takes
+// the body's spacing again.
+#let thesisreferences(body) = {
+  set par(leading: thesissingleleading, spacing: thesisleading)
+  body
+}
+
 // first-line-indent takes a plain length before typst 0.13 and accepts a
 // dictionary from 0.13 on, where all: true indents the paragraph that opens a
 // section as well as the ones that follow. Everything that sets the indent
@@ -325,6 +343,12 @@
   quoteparspace: none,
   quotespace: none,
   quoteindentall: none,
+  // Numbered notes. none leaves a footnote as typst sets one: its number in a
+  // box of its own at the head of the entry, and the entries a little apart.
+  // noteindent is how far in a note's first line begins, its turned lines
+  // running to the margin; notegap is the space between one note and the next.
+  noteindent: none,
+  notegap: none,
   // Space above a figure or table, ahead of its "Figure 1" / "Table 1" title.
   // none follows the body's space between blocks. Typst takes the larger of
   // this and whatever the element above asks for below itself, so a float
@@ -426,7 +450,13 @@
       }
     }
   } else {
-    none
+    // auto, not none. A page told outright that it has no footer shows no
+    // page number either, whatever its numbering says, so pagenumbering did
+    // nothing at all in the modes that set one: doc numbered no page, and
+    // neither did thesis. auto leaves typst to draw the number it was asked
+    // for, at the centre of the foot, and shows nothing where the numbering
+    // is none.
+    auto
   }
 
   set page(
@@ -461,8 +491,25 @@
     first-line-indent: apaparindent(firstlineindent, all: indentall)
   )
 
+  // A cell takes the alignment of its column and nothing else. set par reaches
+  // inside a table as it does everywhere, so in the modes whose body is
+  // justified -- jou and doc -- a cell long enough to wrap was justified too,
+  // and a column the writer had asked to be left aligned came out with its
+  // gaps stretched to the column edge. APA sets no table that way.
+  show table: set par(justify: false)
+
   // Also "leading" space between paragraphs
   set block(spacing: spacing, above: spacing, below: spacing)
+
+  // A note, where a mode asks for measurements of its own. Gathered and spread
+  // rather than named one by one: naming either at typst's own value is not
+  // the same as leaving it alone, since typst works both out from the size a
+  // note is set at, and a set rule written inside an if reaches only as far as
+  // that block.
+  let noteargs = (:)
+  if noteindent != none { noteargs.insert("indent", noteindent) }
+  if notegap != none { noteargs.insert("gap", notegap) }
+  set footnote.entry(..noteargs)
 
   set text(
     font: font,
@@ -506,40 +553,48 @@
   show "TeX": TeX
   show "LaTeX": LaTeX
 
-  // format figure captions
-  show figure.where(kind: "quarto-float-fig"): it => block(width: 100%, breakable: false, above: fspace)[
-  #if type(it.numbering) == function [
-      #it
-    ] else [
-    #if int(appendixcounter.display().at(0)) > 0 [
-      #heading(level: 2, outlined: false)[#it.supplement #appendixcounter.display("A")#it.counter.display()]
-    ] else [
-      #heading(level: 2, outlined: false)[#it.supplement #it.counter.display()]
-    ]
-    #align(left)[#par(first-line-indent: 0pt)[#emph[#it.caption.body]]]
-    #align(center)[#it.body]
-    
-  ]]
-  
-  // format table captions
-  // skip custom formatting for sub-figures inside quarto_super (their numbering is set to a function)
-  show figure.where(kind: "quarto-float-tbl"): it => {
-    if type(it.numbering) == function {
-      it
+  // How a float is set: its number on a line of its own, the caption under it
+  // in italics, and the float itself below that. APA sets a figure and a table
+  // this way and so does every other kind of float a document declares for
+  // itself under crossref.custom --- an Illustration is the one apaquarto
+  // ships. A table is set flush left throughout; everything else centres what
+  // it holds.
+  //
+  // One rule for all of them, dispatching on the kind, rather than a rule per
+  // kind: a rule per kind would have to name every kind a document might
+  // declare, and the ones it did not name would fall back on typst's own
+  // caption, which runs the number and the caption together on one line.
+  //
+  // A sub-figure inside a multipanel float has its numbering set to a
+  // function, and is left alone: quarto keeps the count on the panels and
+  // apaquarto labels them itself.
+  let apafloatlabel(it) = {
+    if int(appendixcounter.display().at(0)) > 0 {
+      heading(level: 2, outlined: false, numbering: none)[#it.supplement #appendixcounter.display("A")#it.counter.display()]
     } else {
-      block(width: 100%, breakable: false, above: fspace)[#align(left)[
+      heading(level: 2, outlined: false, numbering: none)[#it.supplement #it.counter.display()]
+    }
+  }
 
-        #if int(appendixcounter.display().at(0)) > 0 [
-          #heading(level: 2, outlined: false, numbering: none)[#it.supplement #appendixcounter.display("A")#it.counter.display()]
-        ] else [
-          #heading(level: 2, outlined: false, numbering: none)[#it.supplement #it.counter.display()]
-        ]
+  show figure: it => {
+    if (type(it.numbering) == function or type(it.kind) != str or
+        not it.kind.starts-with("quarto-float-")) {
+      it
+    } else if it.kind == "quarto-float-tbl" {
+      block(width: 100%, breakable: false, above: fspace)[#align(left)[
+        #apafloatlabel(it)
         #par(first-line-indent: 0pt)[#emph[#it.caption.body]]
         #block[#it.body]
       ]]
+    } else {
+      block(width: 100%, breakable: false, above: fspace)[
+        #apafloatlabel(it)
+        #align(left)[#par(first-line-indent: 0pt)[#emph[#it.caption.body]]]
+        #align(center)[#it.body]
+      ]
     }
   }
-  
+
     set heading(numbering: "1.1")
 
     show heading: set text(size: fontsize)
@@ -674,6 +729,33 @@
   headerstyle: "none",
   pagenumbering: "1",
   updatepagecounter: true,
+  ..args,
+)
+
+// documentmode: thesis — a Temple University dissertation or thesis.
+// Manuscript layout, with the margins the Graduate School asks for: 1.5" at
+// the left, where the work is bound, and 1" elsewhere. The front matter --
+// the title page first -- is built in thesisfrontmatter.lua, the same way for
+// all four formats.
+#let thesis(..args) = apa-layout(
+  margin: (left: 1.5in, right: 1in, top: 1in, bottom: 1in),
+  // No running head: the Graduate School asks for the page number and nothing
+  // else. Numbered in lower-case roman, which is what the front matter takes;
+  // the body begins again at 1 in arabic, set where the front matter ends.
+  headerstyle: "none",
+  pagenumbering: "i",
+  leading: thesisleading,
+  // A block quotation is single spaced and indented half an inch from both
+  // margins, which quoteinset already is.
+  quoteleading: thesissingleleading,
+  // A note's first line begins half an inch in, its turned lines running to
+  // the margin, and a double space stands between one note and the next. A
+  // note is set smaller than the body, so what reads as a double space there
+  // is not the body's 18pt: typst measures a gap from the depth of one entry
+  // to the cap height of the next, and 17.25pt is what leaves the first line
+  // of a note two of its own lines below the last line of the one above it.
+  noteindent: 0.5in,
+  notegap: 17.25pt,
   ..args,
 )
 
