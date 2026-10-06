@@ -125,7 +125,7 @@ engine: knitr
 # Version 5.0.18
 - 2026-03-25
 - Multiple pull requests from [Michael Zehetleitner](https://github.com/michaelzehetleitner) to make the extension more robust.
-
+    
 # Version 5.0.17
 - 2026-03-25
 - [#152](https://github.com/wjschne/apaquarto/issues/152) Fix .pdf longtable problem Thanks [drfurtado](https://github.com/drfurtado) for identifing the problem and [Michael Zehetleitner](https://github.com/michaelzehetleitner) posting a solution.
