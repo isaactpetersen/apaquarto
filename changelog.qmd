@@ -13,10 +13,43 @@ engine: knitr
     * Right-align equation numbers
 
 # Version 7.0.0
-- 2026-09-28
+- 2026-10-06
 - `documentmode: thesis` sets a Temple University dissertation or thesis, so far the title page, the copyright page, the abstract, the dedication, the acknowledgments, the table of contents, a list for every kind of float the document holds, and the page numbering: the title in capitals in an inverted pyramid apaquarto works out for you, the front matter in lower-case roman with the title page counted but unnumbered, the body beginning again at 1, and the margins the Graduate School asks for, in all four formats.
 - A float a document declares for itself under `crossref.custom` --- an Illustration is the one apaquarto ships --- is set the way a figure is, with its number on a line of its own and its caption under it, in all four formats.
 - The `apa-note` of such a float is written and styled the way a figure's is.
+- Such a float in an appendix is numbered with the appendix letter (Illustration A1), in its caption and in references to it, and moves to the end with the figures when `floatsintext: false`.
+- The `apa-note` of a plain markdown table keeps its emphasis, bold and code in .html, .docx and .pdf, as it already did in typst.
+- `ref-hyperlink: false` applies to references to appendices as well.
+- A document with cross-references but no citations no longer gets stray reference-list spacing in typst.
+- `numbered-lines` is read the same way in .docx as in .pdf and typst: anything but `false` turns it on.
+- In typst, a paper whose title begins with the word "Appendix" no longer numbers the figures in its body as though they were in an appendix.
+- In .html and .docx a figure's or table's note is written inside the float, as it already was in .pdf and typst, so the two always travel together.
+- A figure with sub-figures and no layout no longer prints its note twice in .html and .docx.
+- In .docx a panel's own note is centred under its panel (the SubPanelNote style), as in .html.
+- A title that ends in emphasis or code, with a subtitle, no longer stops the render.
+- `blank-lines-above-title` is honoured, and a `blank-lines-above-author-note` that is not a number falls back to 2 with a warning instead of stopping the render.
+- In .docx a level-four or level-five heading keeps its italics and bold, and a cross-reference to it links to it rather than printing `?@sec-`.
+- Appendices written the older way (`# Appendix A` over a title of its own) are lettered once, so their figures and tables are A1, B1, and "Appendix A" is no longer printed twice.
+- In .pdf `suppress-short-title` leaves the running head empty, as it does in .docx and typst.
+- A note on a plain div is no longer lost when a figure or table carries a note with the same words.
+- In typst journal mode a note written under a plain div, a markdown image or a code-chunk table is no longer indented.
+- The table of contents and the lists of figures and tables take their headings from the document's language, and an Illustration is listed with the figures in .docx and typst as it is in .pdf.
+- In .pdf journal mode the ORCID lines of the author note are set flush left and unjustified, as they are in typst.
+- `margin` sets the margins in every mode of the .pdf, the .docx and typst alike, with typst's keys (`x`, `y`, `left`, `right`, `top`, `bottom`); in the .pdf `geometry` still works and wins where both name a side.
+- The word count's label takes `title-word-count` from the `language` field, as documented; it had always read *Word Count*.
+- apaquarto reads Quarto's `section-title-appendices` (it had spelled it `section-title-appendixes`, which still works), and a dissertation's contents labels its appendices with it.
+- The heading of a dissertation's list of tables is named by `thesis-list-of-tables`, after the `list-of-tables` field, and every word of the front matter is listed on the options page.
+- In typst the space between paragraphs is the line spacing (`leading`), so a manuscript is evenly double spaced and a journal article's paragraphs are no longer set apart by extra space.
+- In journal mode, .pdf and typst alike, level one to three headings are set the way the Journal of Educational Psychology sets them: a point larger than the body, with 26pt from the line above and 18pt to the line below.
+- A typst manuscript is double spaced at 24pt, as the .pdf is; it was 26pt.
+- A block quotation is indented on the left only, in every format and mode: half an inch, and 16pt in journal mode as the APA journals set one.
+- In typst journal mode the first paragraph of a block quotation with a second paragraph or an attribution is no longer indented.
+- In typst the first paragraph after a heading is spaced like any other in every mode; in document mode it had been 4pt too close.
+- A block quotation whose last paragraph begins with an em dash (`---`) ends with an attribution, set against the quotation's right edge a line below it in every format.
+- In a dissertation the document's own margins reach the front matter as well as the body, and `thesis: title-margin` sets the title page's.
+- [#170](https://github.com/wjschne/apaquarto/issues/170) In .pdf a table's title and caption are no longer left alone at the foot of a page with the table on the next.
+- [#168](https://github.com/wjschne/apaquarto/issues/168) In .docx a captioned markdown table keeps the APA rules of the reference document's Table style; it had been set with none.
+- [#169](https://github.com/wjschne/apaquarto/issues/169) In .pdf the `apa-note` of a figure drawn by a code chunk is written inside the figure, so a page break or a floating figure no longer parts the two.
 
 # Version 6.0.1
 - 2026-09-26
