@@ -38,13 +38,15 @@ internal <- c(
   "apatitle", "apatitledisplay", "by-author", "description",
   "jou-running-authors", "references", "wordn", "zerocitations",
   # set by apaquote.lua for docxreferencedoc.lua
-  "apa-quote-attribution"
+  "apa-quote-attribution",
+  # table-spacing as formattypst.lua reads it, handed to the typst template
+  "apa-table-spacing"
 )
 
 # Quarto's and Pandoc's own fields, which apaquarto reads but their
 # documentation covers.
 quarto <- c(
-  "author", "citeproc", "classoption", "crossref", "csl", "lang",
+  "author", "citeproc", "classoption", "crossref", "csl", "css", "lang",
   "link-citations", "nocite", "number-depth", "numbersections",
   "ref-hyperlink", "subtitle", "toc", "toc-depth"
 )

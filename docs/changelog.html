@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Changelog – APA Style Documents with apaquarto</title>
+<title>Changelog – apaquarto</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -114,7 +114,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">APA Style Documents with apaquarto</span>
+    <span class="navbar-title">apaquarto</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -125,23 +125,27 @@ window.Quarto = {
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
     <a class="nav-link" href="./index.html"> 
-<span class="menu-text">Introduction</span></a>
+<span class="menu-text">Intro</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./installation.html"> 
-<span class="menu-text">Installation</span></a>
+<span class="menu-text">Install</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apashiny.html"> 
-<span class="menu-text">Web App</span></a>
+<span class="menu-text">App</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./options.html"> 
-<span class="menu-text">Template Options</span></a>
+<span class="menu-text">Options</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./writing.html"> 
-<span class="menu-text">APA Style via Markdown</span></a>
+<span class="menu-text">APA Markdown</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./thesis-tutorial.html"> 
+<span class="menu-text">Thesis Tutorial</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./resources.html"> 
@@ -174,6 +178,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#future-version-wishlist" id="toc-future-version-wishlist" class="nav-link active" data-scroll-target="#future-version-wishlist">Future Version Wishlist</a></li>
+  <li><a href="#version-7.0.2" id="toc-version-7.0.2" class="nav-link" data-scroll-target="#version-7.0.2">Version 7.0.2</a></li>
   <li><a href="#version-7.0.1" id="toc-version-7.0.1" class="nav-link" data-scroll-target="#version-7.0.1">Version 7.0.1</a></li>
   <li><a href="#version-7.0.0" id="toc-version-7.0.0" class="nav-link" data-scroll-target="#version-7.0.0">Version 7.0.0</a></li>
   <li><a href="#version-6.0.1" id="toc-version-6.0.1" class="nav-link" data-scroll-target="#version-6.0.1">Version 6.0.1</a></li>
@@ -296,6 +301,19 @@ window.Quarto = {
 <ul>
 <li>Right-align equation numbers</li>
 </ul></li>
+</ul>
+</section>
+<section id="version-7.0.2" class="level1">
+<h1>Version 7.0.2</h1>
+<ul>
+<li>2026-10-07</li>
+<li>In .docx a table laid out in panels sets its panels side by side in one grid; every panel after the first was set under the grid.</li>
+<li>In .docx a figure or table followed directly by another stands one blank line from it, not two.</li>
+<li>A table’s top rule stands the same distance under its caption in .pdf, typst and .docx; .docx had six points more, and the .pdf’s distance stretched with the page.</li>
+<li>A table’s rows are spaced alike in every format, double by default (single in journal and doc modes), and the new <code>table-spacing</code> option sets them single, one-and-a-half or double spaced.</li>
+<li>In typst a table’s rules stand as far from its text as booktabs sets them in .pdf, where they had stood as close as the next row, and a table without a header row no longer has a rule over its second row.</li>
+<li>A table’s or figure’s note stands the same distance under it in .pdf, typst and .docx; .docx had 10 points less, and in .pdf it varied by a point or two with the table’s columns and the caption’s letters.</li>
+<li>In .docx and typst a table’s header cells sit at the foot of their row and its body cells at the top of theirs, as in .pdf; .docx had centred every cell in its row, and typst had set the header cells at the top.</li>
 </ul>
 </section>
 <section id="version-7.0.1" class="level1">
