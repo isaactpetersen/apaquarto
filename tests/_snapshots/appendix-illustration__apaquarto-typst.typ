@@ -237,11 +237,14 @@
 #let docfirstlineindent = 0.25in
 
 // A dissertation sets its body double spaced, but a block quotation and the
-// entries of its reference list single spaced. thesissingleleading is typst's
-// own leading, which is what single spacing is here the way thesisleading is
-// what double spacing is.
-#let thesissingleleading = 0.65em
-#let thesisleading = 18pt
+// entries of its reference list single spaced, all as the .pdf does. Typst
+// counts leading from the bottom of one line to the top of the next, so a
+// line stands its leading plus about 8pt (the height of a capital at 12pt)
+// below the one above: 16pt sets the .pdf's 24pt double spacing, and 0.5em
+// its 14pt single spacing (measured in tests/layout-thesis.qmd). They were
+// 18pt and typst's own 0.65em, which set 26pt and 16pt.
+#let thesissingleleading = 0.5em
+#let thesisleading = 16pt
 
 // The entries of a dissertation's reference list: single spaced within an
 // entry, with a double space between one entry and the next, which is the
@@ -264,6 +267,12 @@
 // all: true changes only the amount and keeps that all: true, so a journal's
 // block quotation, whose body indents every paragraph, had its first
 // paragraph indented whenever it had a second one, an attribution included.
+// A block that stays on the page with the start of the block after it, as a
+// heading does: a figure's number and caption with its picture, and the
+// picture with the first line of its note. sticky is Typst 0.12's; before
+// that the block simply has nothing to hold it.
+#let apasticky = if sys.version >= version(0, 12, 0) { (sticky: true) } else { (:) }
+
 #let apaparindent(amount, all: false) = if sys.version >= version(0, 13, 0) {
   (amount: amount, all: all)
 } else {
@@ -579,8 +588,9 @@
   // running to the margin; notegap is the space between one note and the next.
   noteindent: none,
   notegap: none,
-  // Space above a figure or table, ahead of its "Figure 1" / "Table 1" title.
-  // none follows the body's space between blocks. Typst takes the larger of
+  // Space above and below a figure or table, ahead of its "Figure 1" /
+  // "Table 1" title and after its note. none is a blank line of the body's
+  // spacing, as APA asks of a manuscript. Typst takes the larger of
   // this and whatever the element above asks for below itself, so a float
   // after a section heading keeps the heading's space.
   floatspace: none,
@@ -768,7 +778,16 @@
   let qleading = if quoteleading == none { leading } else { quoteleading }
   let qspace = if quotespace == none { spacing } else { quotespace }
   let qindentall = if quoteindentall == none { indentall } else { quoteindentall }
-  let fspace = if floatspace == none { spacing } else { floatspace }
+  // A blank line between a figure or table and the text above and below it,
+  // as APA asks of a manuscript: "If text appears on the same page as a table
+  // or figure, add a double-spaced blank line between the text and the table
+  // or figure." That is the space between two paragraphs and a line more.
+  // Typst sets a line its leading plus the height of a capital (about 0.66em
+  // in Times) below the one before, so in a manuscript this is 40pt, which
+  // stands the float 48pt from the text, as the .pdf's /addvspace does
+  // (tests/layout-float-space.qmd). It had been the paragraph spacing alone,
+  // a line and no blank line. Journal mode gives its own.
+  let fspace = if floatspace == none { spacing + leading + 0.66em } else { floatspace }
 
   let qright = if quoteinsetright == none { quoteinset } else { quoteinsetright }
   // A block quotation is set in a pad of apaquarto's own rather than in the
@@ -821,20 +840,38 @@
     }
   }
 
+  // The float may break across pages; what may not be parted is held
+  // together inside it. The number and caption are one block that stays with
+  // the start of the body. formattypst.lua sets the body's picture or table in
+  // a block that cannot break, and, when a note follows, stays with the
+  // note's first line, while the note itself may run on to the next page. A
+  // float that could not break at all had a note too long for the rest of a
+  // page set past the foot of it and cut off (wjschne/apaquarto#171,
+  // tests/layout-figure-note-break.qmd).
+  //
+  // A figure is laid out inside a block of its own, around whatever the rule
+  // below returns, and that block cannot break unless it is told it can: with
+  // the inner block breakable and nothing else changed, the note still went
+  // over to the next page whole.
+  show figure: set block(breakable: true)
   show figure: it => {
     if (type(it.numbering) == function or type(it.kind) != str or
         not it.kind.starts-with("quarto-float-")) {
       it
     } else if it.kind == "quarto-float-tbl" {
-      block(width: 100%, breakable: false, above: fspace)[#align(left)[
-        #apafloatlabel(it)
-        #par(first-line-indent: 0pt)[#emph[#it.caption.body]]
+      block(width: 100%, breakable: true, above: fspace, below: fspace)[#align(left)[
+        #block(breakable: false, ..apasticky)[
+          #apafloatlabel(it)
+          #par(first-line-indent: 0pt)[#emph[#it.caption.body]]
+        ]
         #block[#it.body]
       ]]
     } else {
-      block(width: 100%, breakable: false, above: fspace)[
-        #apafloatlabel(it)
-        #align(left)[#par(first-line-indent: 0pt)[#emph[#it.caption.body]]]
+      block(width: 100%, breakable: true, above: fspace, below: fspace)[
+        #block(breakable: false, ..apasticky)[
+          #apafloatlabel(it)
+          #align(left)[#par(first-line-indent: 0pt)[#emph[#it.caption.body]]]
+        ]
         #align(center)[#it.body]
       ]
     }
@@ -1003,13 +1040,13 @@
   headerstyle: "none",
   pagenumbering: "i",
   leading: thesisleading,
-  // A block quotation is single spaced and indented half an inch from both
-  // margins, which quoteinset already is.
+  // A block quotation is single spaced and indented half an inch on the left,
+  // as in every mode, which quoteinset already is.
   quoteleading: thesissingleleading,
   // A note's first line begins half an inch in, its turned lines running to
   // the margin, and a double space stands between one note and the next. A
   // note is set smaller than the body, so what reads as a double space there
-  // is not the body's 18pt: typst measures a gap from the depth of one entry
+  // is not the body's leading: typst measures a gap from the depth of one entry
   // to the cap height of the next, and 17.25pt is what leaves the first line
   // of a note two of its own lines below the last line of the one above it.
   noteindent: 0.5in,
@@ -1083,7 +1120,9 @@ Zqlastparagraph.
 
 #pagebreak(weak: true)
 #figure([
+#block(breakable: false)[
 #box(image("sampleimage.png"))
+]
 ], caption: figure.caption(
 position: top,
 [
@@ -1103,7 +1142,9 @@ supplement: "Illustration",
 = Appendix Title
 <apx-one>
 #figure([
+#block(breakable: false)[
 #box(image("sampleimage.png"))
+]
 ], caption: figure.caption(
 position: top,
 [

@@ -284,20 +284,36 @@ local function panel_cell(panel, index)
   return blocks
 end
 
+-- The body of a float, the picture, table or grid of panels, in a block that
+-- cannot break. The template lets the float itself break, so that a note too
+-- long for the rest of the page runs on to the next one rather than off the
+-- foot of it (#171); what may not be parted is held together here instead.
+-- Followed by a note, the block stays on the page with the note's first line.
+local function keep_body(blocks, before_note)
+  local out = pandoc.Blocks({
+    pandoc.RawBlock("typst", "#block(breakable: false"
+      .. (before_note and ", ..apasticky" or "") .. ")[")
+  })
+  out:extend(floatrecord.as_blocks(blocks))
+  out:insert(pandoc.RawBlock("typst", "]"))
+  return out
+end
+
 -- The whole figure: the grid of panels, then the note under it at full width.
 -- The panels are already plain blocks by the time this runs, each one having
 -- been through panel_cell below.
 local function laid_out_float(record)
   local float = record.float
-  local content = pandoc.Blocks({
+  local grid = pandoc.Blocks({
     pandoc.RawBlock("typst", "#grid(columns: " .. record.columns .. ", gutter: 2em,")
   })
   for index, panel in ipairs(record.panels) do
-    content:insert(pandoc.RawBlock("typst", "["))
-    content:extend(panel_cell(panel, index))
-    content:insert(pandoc.RawBlock("typst", "],"))
+    grid:insert(pandoc.RawBlock("typst", "["))
+    grid:extend(panel_cell(panel, index))
+    grid:insert(pandoc.RawBlock("typst", "],"))
   end
-  content:insert(pandoc.RawBlock("typst", ")"))
+  grid:insert(pandoc.RawBlock("typst", ")"))
+  local content = keep_body(grid, record.note ~= nil)
 
   if record.note then
     content:insert(pandoc.RawBlock("typst", "#align(left)["))
@@ -313,6 +329,13 @@ local function laid_out_float(record)
   return float
 end
 
+-- The note is written inside the float however it was given, so that the
+-- figure's show rule, an unbreakable block, holds the two together. A note
+-- written after the float, as apanote.lua writes one, could be parted from it
+-- by a page break: the figure ended one page and its note began the next
+-- (tests/layout-chunk-note.qmd). A note on an image is taken off the image
+-- once it is written here, so that apanote.lua finds nothing to lift; the
+-- note of a code chunk is brought down from the cell by mark_cell_notes below.
 local function floatnote(record)
   if divnotes[record.identifier] then
     return nil
@@ -321,9 +344,65 @@ local function floatnote(record)
     return nil
   end
   if note_on_image(record.float) then
-    return nil
+    record.float.content = record.float.content:walk {
+      Image = function(img)
+        if img.attributes and img.attributes["apa-note"] then
+          img.attributes["apa-note"] = nil
+          return img
+        end
+      end
+    }
+    -- A float holding one image has that one block for its content.
+    record.content = floatrecord.as_blocks(record.float.content)
   end
   return floatrecord.note_blocks(record.note, noteword)
+end
+
+-- The floats a cell holds, not counting the panels inside one of them.
+local function cell_floats(blocks)
+  local found = {}
+  local function look(list)
+    for _, block in ipairs(list) do
+      local float = floatrecord.float_behind(block)
+      if float then
+        found[#found + 1] = float
+      elseif block.t == "Div" then
+        look(block.content)
+      end
+    end
+  end
+  look(blocks)
+  return found
+end
+
+-- A code chunk's apa-note is set on the cell quarto wraps the chunk's output
+-- in, not on the float inside it, so apanote.lua wrote it after the cell,
+-- outside the figure. A cell holding one float hands its note down to that
+-- float and is marked as written, so that the note is written inside the
+-- float, once. A cell drawing several figures keeps its one note under them
+-- all, written by apanote.lua as before, and none of its floats writes it.
+local function mark_cell_notes(div)
+  local note = div.attributes["apa-note"]
+  if not note or div.attributes[utilsapa.note_written] == utilsapa.note_mark() then
+    return nil
+  end
+  local floats = cell_floats(div.content)
+  -- A float carrying a note of its own that says something else keeps both,
+  -- the way they were written before (tests/note-sources.qmd).
+  local own = #floats == 1 and floats[1].attributes
+    and floats[1].attributes["apa-note"]
+  if #floats == 1 and (not own or own == note) then
+    local float = floats[1]
+    float.attributes = float.attributes or {}
+    float.attributes["apa-note"] = note
+    div.attributes[utilsapa.note_written] = utilsapa.note_mark()
+    return div
+  end
+  for _, float in ipairs(floats) do
+    if float.identifier then
+      divnotes[float.identifier] = true
+    end
+  end
 end
 
 return {
@@ -352,21 +431,12 @@ return {
   -- below read it as the blocks typst is given.
   { Pandoc = typstfrontmatter.lay_out },
   {
-    -- Find the tables whose note is already on a surrounding div. A float is
-    -- a custom node, which a walk sees only as the div standing in for it, so
+    -- A note on a div around a float: brought down into the float when the div
+    -- holds just the one, and otherwise left to apanote.lua, with the floats
+    -- inside standing down so that it is not written twice. A float is a
+    -- custom node, which a walk sees only as the div standing in for it, so
     -- the float is looked up by the id that div carries.
-    Div = function(div)
-      if div.attributes["apa-note"] then
-        div.content:walk {
-          Div = function(d)
-            local float = floatrecord.float_behind(d)
-            if float and float.identifier then
-              divnotes[float.identifier] = true
-            end
-          end
-        }
-      end
-    end
+    Div = mark_cell_notes
   },
   {
     -- Put the note below the float's content. It goes inside the float, as it
@@ -385,12 +455,12 @@ return {
       end
 
       local note = floatnote(record)
-      if not note then return nil end
-      local content = pandoc.Blocks({})
-      content:extend(record.content)
-      content:insert(pandoc.RawBlock("typst", "#align(left)["))
-      content:insert(note)
-      content:insert(pandoc.RawBlock("typst", "]"))
+      local content = keep_body(record.content, note ~= nil)
+      if note then
+        content:insert(pandoc.RawBlock("typst", "#align(left)["))
+        content:insert(note)
+        content:insert(pandoc.RawBlock("typst", "]"))
+      end
       float.content = content
       return float
     end

@@ -167,14 +167,13 @@
       contains:
         - 'begin{apapanel}'
       count:
-        # Two panels side by side in one figure environment. A panel left as a
-        # float of its own would make a figure within a figure, which latex
-        # sets one under the other whatever the layout asked for.
+        # Two panels side by side in one figure. A panel left as a float of its
+        # own would make a figure within a figure, which latex sets one under
+        # the other whatever the layout asked for. The figure is set in the
+        # text flow, as a manuscript's are (#171), and says it is a figure with
+        # \captionsetup, once.
         'begin{apapanel}': 2
-        # Named with its placement, so that the figure environments inside the
-        # author note's own definition in the preamble are not counted as a
-        # second figure in the body.
-        '\begin{figure}[H]': 1
+        '\captionsetup{type=figure}': 1
 
 # The same figure again with panels written as plain markdown images, which is
 # neither a float nor a cell and keeps its note on the image itself.
@@ -235,10 +234,7 @@
     tex:
       count:
         'begin{apapanel}': 2
-        # Named with its placement, so that the figure environments inside the
-        # author note's own definition in the preamble are not counted as a
-        # second figure in the body.
-        '\begin{figure}[H]': 1
+        '\captionsetup{type=figure}': 1
 
 # ------------------------------------------- abstract written in the document --
 
@@ -1377,7 +1373,7 @@
         - 'LIST OF ILLUSTRATIONS'
 
 # The line spacing the Graduate School asks for: a block quotation single
-# spaced and half an inch in from both margins, the entries of the reference
+# spaced and half an inch in on the left, the entries of the reference
 # list and of the table of contents single spaced within an entry and a double
 # space apart, and widows and orphans avoided. The measurements are in the
 # snapshots; what is checked here is that each format is asked for them.
@@ -1426,6 +1422,10 @@
         - '<w:spacing w:after="276" w:line="240" w:lineRule="auto"'
         # A note's first line is indented half an inch.
         - '<w:ind w:firstLine="720" />'
+        # A block quotation half an inch in on the left and not at all on the
+        # right, as in every mode. This mode's Block Text kept a right indent
+        # of 720 after every other had lost it.
+        - '<w:ind w:firstLine="0" w:left="720" />'
     docx-xml:
       contains:
         # And the contents entries, which are written out rather than styled.
@@ -1486,12 +1486,14 @@
     docx-xml:
       contains:
         # An illustration is styled as a figure is: the note held on the page
-        # with it, and the paragraph after a float with no note given the
-        # spacing that goes with that.
+        # with it, and a float with no note ending in the FigureWithoutNote
+        # picture, which carries the blank line under it itself. The paragraph
+        # after took that space (AfterWithoutNote) until a heading after the
+        # float was found to get none; that style is now a table's alone
+        # (tests/layout-float-space.qmd).
         - '<w:pStyle w:val="FigureNote" />'
         - '<w:pStyle w:val="FigureWithNote" />'
         - '<w:pStyle w:val="FigureWithoutNote" />'
-        - '<w:pStyle w:val="AfterWithoutNote" />'
 
 # ------------------------------------------------------------- translation --
 
@@ -2284,6 +2286,11 @@
         is: 24
       - gap: [Gammaone, Deltaone]
         is: 24
+      # A heading takes one double-spaced line and no more: two lines from
+      # the body line above it to the body line below. A blank line above
+      # every heading made this 72pt.
+      - gap: [Betaone, Gammaone]
+        is: 48
       # The inch of margin and the half-inch indent.
       - left: Alphaone
         is: 108
@@ -2342,6 +2349,37 @@
   expect:
     layout: *journal-quote
 
+- fixture: layout-thesis.qmd
+  to: apaquarto-pdf
+  expect:
+    layout: &thesis-spacing
+      # The body double spaced at 24pt, within a paragraph and between two.
+      # typst set 26pt.
+      - gap: [Lineone, Linetwo]
+        is: 24
+      - gap: [Paraone, Paratwo]
+        is: 24
+      # A quotation single spaced, at 14pt; typst set 16pt...
+      - gap: [Quoteone, Quotetwo]
+        is: 14
+      # ...a double space from the body on either side. The .pdf set 28pt
+      # above and 37pt below, the list's \topsep on top of the line spacing.
+      - gap: [Paratwo, Quoteone]
+        is: 24
+      - gap: [Quotetwo, Afterquote]
+        is: 24
+      # A reference entry single spaced within itself, and a double space to
+      # the next: two lines of Austen's entry, then a double space.
+      - gap: [Schneider, abilities]
+        is: 14
+      - gap: [Austen, Masked]
+        is: 38
+
+- fixture: layout-thesis.qmd
+  to: apaquarto-typst
+  expect:
+    layout: *thesis-spacing
+
 - fixture: layout-chunk-note.qmd
   to: apaquarto-pdf
   expect:
@@ -2357,6 +2395,132 @@
       # measured on the first word's page, so it fails if the note went over.
       - gap: [Breakcap, Breaknote]
         is: 144
+
+- fixture: layout-chunk-note.qmd
+  to: apaquarto-typst
+  expect:
+    layout:
+      # As in the .pdf: the chunk's note and the markdown figure's the same
+      # distance under their captions...
+      - gap: [Chunkcap, Chunknote]
+        is: 271
+      - gap: [Mdcap, Mdnote]
+        is: 271
+      # ...and a figure at the foot of a page keeps its note on that page.
+      - gap: [Breakcap, Breaknote]
+        is: 143
+    typ:
+      count:
+        # Each note written once, inside its figure.
+        'Chunknote': 1
+        'Mdnote': 1
+
+- fixture: layout-float-space.qmd
+  to: apaquarto-pdf
+  expect:
+    layout:
+      # A blank line between the text and the figure: to its caption, a line
+      # under its number...
+      - gap: [Beforeone, Figcap]
+        is: 72
+      # ...and from its note to the text below.
+      - gap: [Fignote, Afterone]
+        is: 48
+      # The same for a table.
+      - gap: [Beforetwo, Tabcap]
+        is: 72
+      - gap: [Tabnote, Aftertwo]
+        is: 48
+      # Flush left, at the inch of margin; longtable centred it.
+      - left: Tabhead
+        is: 72
+      # The note on the line under the rule: the last row's baseline, the
+      # rule, and a line. It stood 53pt under, longtable's \LTpost and half
+      # an em more.
+      - gap: [Tabrow, Tabnote]
+        is: 35
+
+- fixture: layout-float-space.qmd
+  to: apaquarto-typst
+  expect:
+    layout:
+      - gap: [Beforeone, Figcap]
+        is: 72
+      - gap: [Fignote, Afterone]
+        is: 48
+      - gap: [Beforetwo, Tabcap]
+        is: 72
+      - gap: [Tabnote, Aftertwo]
+        is: 48
+      # Flush left too, the first cell's 5pt inset in from the margin. Its
+      # rows are single spaced, so its note is nearer the last row.
+      - left: Tabhead
+        is: 77
+      - gap: [Tabrow, Tabnote]
+        is: 29
+
+- fixture: layout-float-space.qmd
+  to: apaquarto-docx
+  expect:
+    docx-styles:
+      contains:
+        # A blank line, one of Word's 27.6pt double-spaced lines (552 twips),
+        # before a figure's or table's title...
+        - '<w:spacing w:before="552" w:line="480" w:lineRule="auto" />'
+        # ...and after its note, or its picture when it has none, so that a
+        # heading after it is held off as well as a paragraph. The note's
+        # paragraphs are not spaced apart from one another
+        # (contextualSpacing).
+        - '<w:spacing w:after="552" w:before="60" /><w:ind w:firstLine="0" /><w:contextualSpacing />'
+        - '<w:spacing w:after="552" />'
+        # Before the paragraph after a table without a note, which ends in a
+        # table that can carry no space after itself.
+        - '<w:spacing w:before="552" />'
+    docx-xml:
+      count:
+        # And when what follows such a table is a heading, a spacer a point
+        # high whose space before is the blank line. The heading had none.
+        'w:before="552" w:after="0" w:line="20" w:lineRule="exact"': 1
+
+- fixture: layout-figure-note-break.qmd
+  to: apaquarto-pdf
+  expect:
+    layout: &figure-note-break
+      # A gap is measured on the first word's page. A note cut off at the foot
+      # of the page has no last word to measure from; one set into the bottom
+      # margin had the next paragraph on the page after it. The paragraph
+      # stands the blank line under the note that it stands under any figure
+      # (tests/layout-float-space.qmd).
+      - gap: [Chunkend, Afterone]
+        is: 48
+      - gap: [Mdend, Aftertwo]
+        is: 48
+      # A short note at the foot of a page stays with its figure.
+      - gap: [Keepcap, Keepnote]
+        is: 143
+
+- fixture: layout-figure-note-break.qmd
+  to: apaquarto-typst
+  expect:
+    layout: *figure-note-break
+
+- fixture: layout-table-whole.qmd
+  to: apaquarto-pdf
+  expect:
+    layout:
+      # A gap is measured on the first word's page. The short table where
+      # only its start would fit: caption, last row and note on one page. As
+      # a longtable it was broken after its first row.
+      - gap: [Overcap, Overlast]
+        is: 137
+      - gap: [Overlast, Overnote]
+        is: 34
+      # The short table where it fits stays under the line before it.
+      - gap: [Fitline, Fitcap]
+        is: 72
+      # The long table stays a longtable and begins where it stands.
+      - gap: [Longline, Longcap]
+        is: 73
 
 - fixture: layout-table-keep.qmd
   to: apaquarto-pdf
