@@ -14,14 +14,19 @@ engine: knitr
 
 # Version 7.0.2
 - 2026-10-07
+- [#157](https://github.com/wjschne/apaquarto/issues/157) In .pdf the title and authors are written into the file's metadata, so `pdf-standard: ua-2` no longer fails for a missing `dc:title`.
+- [#157](https://github.com/wjschne/apaquarto/issues/157) In .pdf a character missing from the text face, such as a check mark, is taken from Latin Modern Math or DejaVu Sans, so the file holds no `.notdef` glyph for `pdf-standard: ua-2` to refuse.
 - [#173](https://github.com/wjschne/apaquarto/issues/173) In .html, a note written by the `apanote` filter in a document outside the apaquarto formats is followed by a blank line, as in .docx and .pdf.
 - In .docx a table laid out in panels sets its panels side by side in one grid; every panel after the first was set under the grid.
 - In .docx a figure or table followed directly by another stands one blank line from it, not two.
 - A table's top rule stands the same distance under its caption in .pdf, typst and .docx; .docx had six points more, and the .pdf's distance stretched with the page.
 - A table's rows are spaced alike in every format, double by default (single in journal and doc modes), and the new `table-spacing` option sets them single, one-and-a-half or double spaced.
 - In typst a table's rules stand as far from its text as booktabs sets them in .pdf, where they had stood as close as the next row, and a table without a header row no longer has a rule over its second row.
+- In typst a table's rules are as heavy as in .pdf, about a point above and below the table and 0.6 points under its header, where all three had been half a point.
 - A table's or figure's note stands the same distance under it in .pdf, typst and .docx; .docx had 10 points less, and in .pdf it varied by a point or two with the table's columns and the caption's letters.
 - In .docx and typst a table's header cells sit at the foot of their row and its body cells at the top of theirs, as in .pdf; .docx had centred every cell in its row, and typst had set the header cells at the top.
+- A figure's picture stands the same distance under its caption in .pdf, typst and .docx; .docx had six points more, and in .pdf a caption ending in a line with a descender stood two points further off.
+- In .docx a table column too narrow for its longest word is widened, so that Word no longer breaks a short heading such as "Num" across two lines.
 
 # Version 7.0.1
 - 2026-10-07
