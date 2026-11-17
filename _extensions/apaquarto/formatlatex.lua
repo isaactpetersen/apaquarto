@@ -316,7 +316,7 @@ local function meta(m)
 
   -- A dissertation sets a block quotation, a note and the entries of its
   -- reference list single spaced, indents a quotation half an inch on the
-  -- left and a note's first line half an inch, and keeps a page from
+  -- left and the right and a note's first line half an inch, and keeps a page from
   -- breaking after the first line of a paragraph or before its last. The reference list is patched at the start of the document
   -- rather than in the preamble: the environment quarto writes it in is one
   -- of pandoc's own, and where an include lands among those is a detail of
@@ -889,8 +889,24 @@ local function div(el)
   -- asks for is set on cslhangindent in apalatex.tex instead.
 end
 
+-- A table outside a float that asks for its own table-spacing
+-- (tablespacing.lua), set at it in a group of its own. A float's table has
+-- been set at it already, by floatlatex.lua, which took the request off.
+local function own_table_spacing(tbl)
+  local own = utilsapa.table_own_spacing(tbl)
+  if not own then return nil end
+  tbl.attr.attributes["table-spacing"] = nil
+  return {
+    pandoc.RawBlock("latex", "\\begingroup\\setstretch{"
+      .. utilsapa.table_stretch[own] .. "}\\selectfont"),
+    tbl,
+    pandoc.RawBlock("latex", "\\par\\endgroup"),
+  }
+end
+
 return {
   { Meta = meta },
-  { Div = div, RawBlock = guard_longtable, Link = file_link },
+  { Div = div, RawBlock = guard_longtable, Link = file_link,
+    Table = own_table_spacing },
   { Pandoc = function(doc) return pandoc.Pandoc(blocks(doc), doc.meta) end },
 }

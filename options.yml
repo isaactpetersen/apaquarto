@@ -126,6 +126,21 @@ general:
       ```yaml
       table-spacing: single
       ```
+
+      One table can be spaced apart from the rest by giving it
+      `table-spacing` of its own, as a chunk option or on a markdown
+      table's caption:
+
+      ````markdown
+      ```{r}
+      #| label: tbl-results
+      #| tbl-cap: Results
+      #| table-spacing: double
+      knitr::kable(results)
+      ```
+
+      : Results {#tbl-results table-spacing="double"}
+      ````
   - name: numbered-lines
     description: |
       Numbered lines (every format but .html, which has no pages to number
@@ -687,11 +702,11 @@ thesis:
       `role` (`Advisory Chair`, `External Member`) and an optional
       `affiliation`, and is set as one line with commas between them.
   - name: title-margin
-    default: '1in all round'
+    default: '1.5in at the sides and bottom, 1in at the top'
     description: |
       The title page's margins, in the same shape as `margin`: one length,
       or any of `x`, `y`, `left`, `right`, `top` and `bottom`. A side left
-      out keeps its inch. The title is broken into its inverted pyramid
+      out keeps its default. The title is broken into its inverted pyramid
       against the measure these leave, and the rules under its blocks are
       5.5in or the whole measure, whichever is narrower. The other pages
       take the document's own margins (see Margins, above).

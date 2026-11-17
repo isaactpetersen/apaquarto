@@ -121,9 +121,16 @@ local function label_blocks(float)
   if n and n:match("^%d+$") then
     out:insert(raw("\\setcounter{" .. counter .. "}{" .. (tonumber(n) - 1) .. "}"))
   end
-  local tex = "\\refstepcounter{" .. counter .. "}%\n"
+  -- hyperref names the anchor after \theH<counter>, which is the bare count.
+  -- An appendix starts its count again, so Table A2 got the anchor table.2,
+  -- the same as Table 2 in the body, and a link to it went to Table 2
+  -- (wjschne/apaquarto#175). The prefix goes into the anchor name too.
+  local prefix = (float.attributes or {}).prefix or ""
+  local tex = "\\def\\theH" .. counter .. "{" .. prefix
+    .. "\\arabic{" .. counter .. "}}%\n"
+    .. "\\refstepcounter{" .. counter .. "}%\n"
   if n then
-    local shown = ((float.attributes or {}).prefix or "") .. n
+    local shown = prefix .. n
     tex = tex .. "\\makeatletter\\def\\@currentlabel{" .. shown
       .. "}\\makeatother%\n"
   end
@@ -388,11 +395,16 @@ end
 -- caption line above the rules, and the second \label makes the identifier
 -- multiply defined, so a reference to it could resolve to either. The one on
 -- the table is taken off and the float's own is left.
+--
+-- So is a table's own table-spacing, which the float has set the table at,
+-- so that formatlatex.lua, which spaces a table outside a float, leaves it.
 local function strip_table_identifier(blocks)
   return blocks:walk {
     Table = function(tb)
-      if tb.identifier and tb.identifier ~= "" then
+      if (tb.identifier and tb.identifier ~= "")
+        or tb.attr.attributes["table-spacing"] then
         tb.identifier = ""
+        tb.attr.attributes["table-spacing"] = nil
         return tb
       end
     end
@@ -410,11 +422,9 @@ end
 --
 -- Only a table pandoc writes is counted, a markdown or knitr::kable one,
 -- since its rows are there to count; a table a package writes in latex of
--- its own (flextable, kableExtra) is left as it was. Fifteen rows, double
--- spaced, with the title, caption and head, come to about three quarters of
--- a page; a table longer than that is better broken over pages than pushed
--- whole to the next one.
-local short_table_rows = 15
+-- its own (flextable, kableExtra) is left as it was. How many rows count as
+-- short is floatrecord.short_table_rows, which typst shares.
+local short_table_rows = floatrecord.short_table_rows
 
 -- Whether a float holds one table pandoc writes, and how many rows it has.
 local function native_table(content)
@@ -434,6 +444,17 @@ local function native_table(content)
     end,
   }
   return tables == 1 and not raw_table, rows
+end
+
+-- The spacing a float's one table asks for itself (tablespacing.lua).
+local function own_spacing(content)
+  local spacing = nil
+  pandoc.Blocks(floatrecord.as_blocks(content)):walk {
+    Table = function(tbl)
+      spacing = utilsapa.table_own_spacing(tbl)
+    end,
+  }
+  return spacing
 end
 
 local function short_table(content)
@@ -502,8 +523,18 @@ local function processfloat(float)
   local inflow_figure = (not floated) and (not istable)
   -- A short table is kept whole: see short_table above.
   local short = (not floated) and istable and short_table(record.content)
-  -- A table pandoc writes, in the flow, takes the table spacing.
+  -- A table pandoc writes, in the flow, takes the table spacing, and one
+  -- that asks for its own (tablespacing.lua) takes that, floated or not.
   local spaced = (not floated) and istable and native_table(record.content)
+  local own = istable and native_table(record.content)
+    and own_spacing(record.content) or nil
+  local spacing = nil
+  if own then
+    spacing = "\\begingroup\\setstretch{" .. utilsapa.table_stretch[own]
+      .. "}\\selectfont"
+  elseif spaced then
+    spacing = "\\begingroup\\apatablespacing"
+  end
 
   local blocks = pandoc.List({})
   if floated then
@@ -622,9 +653,9 @@ local function processfloat(float)
     -- Its rows at the table spacing, double unless table-spacing asks for
     -- less, in a group of their own so that the note under the table keeps
     -- the body's (\apatablespacing in apalatex.tex).
-    if spaced then blocks:insert(raw("\\begingroup\\apatablespacing")) end
+    if spacing then blocks:insert(raw(spacing)) end
     blocks:extend(strip_table_identifier(record.content))
-    if spaced then blocks:insert(raw("\\par\\endgroup")) end
+    if spacing then blocks:insert(raw("\\par\\endgroup")) end
   end
 
   local note = note_blocks(record)
